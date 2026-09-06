@@ -179,3 +179,4 @@ Release decision должен основываться на paired bootstrap/con
 | [PR #232](https://github.com/Nanako0129/sepia/pull/232) | Deletion/reversion tests добавлены из editing stylometry | Measured editing association | Не имеет semantic value |
 | [PR #234](https://github.com/Nanako0129/sepia/pull/234) | README/evidence claims исправлены и уточнены | Documentation correction | Репозиторий быстро меняется; нельзя зависеть от prose contract |
 | [Issue #227](https://github.com/Nanako0129/sepia/issues/227) | Human-readable `Voice fit` был воспринят registry как typed record; professional routing удалили | Production interface failure | Closed vocabularies, schema validation и consumer contract обязательны **до** graph integration |
+
