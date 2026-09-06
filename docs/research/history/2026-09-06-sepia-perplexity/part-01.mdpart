@@ -1,0 +1,102 @@
+# AMOS Semantic Relation Layer v0.1: что действительно можно извлечь из Sepia
+
+**Исследовательский отчёт для AIMETON Memory OS — AMOS**  
+**Снимок репозитория:** `Nanako0129/sepia`, commit [`d8a0f948cc46a0ba0d610df7458c4e8943bfe51a`](https://github.com/Nanako0129/sepia/commit/d8a0f948cc46a0ba0d610df7458c4e8943bfe51a), 2026-09-05  
+**Дата отчёта:** 2026-09-06T05:46:20Z  
+**Объект решения:** не humanizer, а переносимые средства декомпозиции текста, типизации отношений, временной/причинной/дискурсивной интерпретации и их безопасного включения в `O`/`A`-проекции AMOS.
+
+---
+
+## Как читать доказательность
+
+В отчёте используются пять меток. Они не являются взаимозаменяемыми.
+
+| Метка | Значение | Что она разрешает утверждать |
+|---|---|---|
+| **M** — measured | Измеренный результат статьи или датасета в указанной выборке | «В этой выборке наблюдалось X» |
+| **H-S** — Sepia heuristic | Авторская редакционная эвристика или интерпретация Sepia | «Sepia предлагает X»; не «X доказано» |
+| **V** — vendor | Рекомендация или самоотчёт поставщика модели/детектора | Только версия- и продукт-специфичный сигнал |
+| **C** — community | Практика сообщества, style guide, wiki/advice | Идея для теста, не эмпирическое основание |
+| **I-AMOS** — inference | Вывод и проектное предложение настоящего исследования | Кандидат на реализацию и проверку, не факт о Sepia |
+
+Ключевой инвариант: **высокая точность классификации происхождения текста не доказывает точность извлечения сущностей, событий или отдельных семантических связей**. Поэтому результаты StoryScope нельзя переносить в AMOS как готовую оценку semantic extraction.
+
+---
+
+# A. Executive conclusion
+
+| Решение | Вывод |
+|---|---|
+| **Usefulness for AMOS** | **5/10 в целом**; около **2/10 как готовая технология**, около **7/10 как источник диагностических представлений и отрицательных требований** |
+| **Fork** | **NO** |
+| **Integrate directly** | **NO** |
+| **Harvest ideas** | **YES** |
+| **Primary target** | В первую очередь граница **E1 → E2**; затем кандидаты для **O** (entity/event/state/time) и **A** (evidence/discourse/recontextualization). `R` и `V` — только при явном тексте и отдельной проверке authority/scope |
+| **Наиболее обоснованный вариант** | **E — комбинация классического NLP, структурированного LLM extraction и evidence gates**; первичные работы и датасеты существенно ценнее самой Sepia |
+
+Sepia **не является semantic parser**. В репозитории нет исполняемого слоя извлечения сущностей и отношений, формальной онтологии, span-level provenance, нормализованной relation schema, temporal constraint solver, confidence calibration или семантического benchmark. Это набор инструкций для написания/редактирования: сам [`SKILL.md`](https://github.com/Nanako0129/sepia/blob/d8a0f948cc46a0ba0d610df7458c4e8943bfe51a/skills/sepia/SKILL.md#L9-L15) определяет цель как de-AI writing, а операции `write/review/refactor/recreate` — как редакторские режимы, не extraction API ([строки 37–48](https://github.com/Nanako0129/sepia/blob/d8a0f948cc46a0ba0d610df7458c4e8943bfe51a/skills/sepia/SKILL.md#L37-L48)).
+
+Тем не менее Sepia содержит несколько хороших **зёрен-представлений**:
+
+1. **Смотреть глубже предложений:** тема, причинная непрерывность, event ordering, disclosure order, QUD абзаца, actor-network shape.
+2. **Разводить время события и порядок рассказа:** flashback/flash-forward, delayed/back-loaded disclosure и «позднее знание меняет чтение раннего фрагмента».
+3. **Привязывать диагноз к цитате:** правило `no quote, no signal` — сильный прототип span provenance, хотя ещё не доказательство истинности связи.
+4. **Не форсировать оценку:** `n/a`, отсутствие aggregate score и отказ превращать corpus percentage в вероятность отдельного текста.
+5. **Разделять measurement и prescription:** после PR #7 репозиторий явно маркирует редакционные рецепты как Sepia inference, а не результат эксперимента.
+6. **Доменно калибровать проверку:** postmortem, issue/PR, ticket и release note требуют разных информационных контрактов.
+7. **Хранить последующее переосмысление как новую связь**, а не переписывать исходный фрагмент — это особенно хорошо совпадает с неизменяемым `E0` AMOS.
+
+Но эти идеи следует заново реализовать на более зрелых основаниях:
+
+- predicate–argument structure: **PropBank/SRL, FrameNet, AMR/UDS, OpenIE**;
+- events и межсобытийные связи: **MAVEN/MAVEN-ERE**;
+- время: **TimeML + Allen/OWL-Time + MATRES/TB-Dense**;
+- причинность: **CaTeRS, Causal-TimeBank, CATENA, MAVEN-ERE**;
+- discourse: **PDTB, RST-DT**;
+- QUD: **QUD dependency parsing/QUDSELECT**, а QUDsim — лишь дополнительная диагностика;
+- source-relative factuality и evidence: **FactBank, FEVER, SciFact, W3C PROV**;
+- русский язык: **NEREL, FrameBank, Russian GUM/RST**, плюс собственная временная и QUD-калибровка.
+
+**Рекомендуемое решение:** строить собственный `AMOS Semantic Extraction Layer`, где любая извлечённая связь сначала является `SemanticRelationCandidate`, несёт точный source span, источник/говорящего, extractor version, explicitness, отдельные confidence/authority/evidence поля и не попадает в `O`/`A` без compatibility gate. Sepia использовать как checklist и источник ablation-гипотез, но не как dependency и не как источник истины.
+
+---
+
+## Метод и охват аудита
+
+Проверен полный приложенный снимок репозитория: 80 файлов, включая обязательные `SKILL.md`, narrative/discourse/rubric/professional/model-fingerprints, все domain/language/voice references, `research/`, eval workflow и тесты. История проверена по commit/PR/Issue, особенно [PR #7](https://github.com/Nanako0129/sepia/pull/7), [#24](https://github.com/Nanako0129/sepia/pull/24), [#168](https://github.com/Nanako0129/sepia/pull/168), [#229](https://github.com/Nanako0129/sepia/pull/229), [#231](https://github.com/Nanako0129/sepia/pull/231), [#232](https://github.com/Nanako0129/sepia/pull/232), [#234](https://github.com/Nanako0129/sepia/pull/234) и [Issue #227](https://github.com/Nanako0129/sepia/issues/227). У upstream StoryScope проверены статья, `taxonomy.json` и extraction/application prompts. Научные утверждения сопоставлены с primary papers, официальными датасетами и стандартами.
+
+### Что обнаружено в реализации, а не в рекламном описании
+
+- Исполняемый код Sepia ограничен проверкой согласованности версий; [unit tests](https://github.com/Nanako0129/sepia/blob/d8a0f948cc46a0ba0d610df7458c4e8943bfe51a/tests/test_check_versions.py#L1-L19) также проверяют версии. Semantic extraction runtime отсутствует.
+- Единственный [behavioral workflow](https://github.com/Nanako0129/sepia/blob/d8a0f948cc46a0ba0d610df7458c4e8943bfe51a/.github/workflows/behavioral-eval.yml#L1-L11) запускает один [release-note rewrite case](https://github.com/Nanako0129/sepia/blob/d8a0f948cc46a0ba0d610df7458c4e8943bfe51a/evals/deaify-release-note/prompt.md#L1-L12); в PR #24 и ветка с Sepia, и baseline получили 1.00. Это не оценивает entities/relations/time/causality/QUD.
+- 30-feature rubric — ручная эвристическая диагностика, не опубликованный XGBoost: это прямо сказано в [`rubric.md` L1–5](https://github.com/Nanako0129/sepia/blob/d8a0f948cc46a0ba0d610df7458c4e8943bfe51a/skills/sepia/references/rubric.md#L1-L5).
+- Репозиторий уже содержит полезную внутреннюю самокоррекцию: [`research/sources.md` L140–142](https://github.com/Nanako0129/sepia/blob/d8a0f948cc46a0ba0d610df7458c4e8943bfe51a/research/sources.md#L140-L142) запрещает трактовать ассоциации/classifier results как проверку порядка проходов, рецептов или thresholds.
+- Issue #227 показывает практическую ошибку интерфейса: открытый, человекочитаемый `Voice fit` был потреблён как типизированная запись. Для AMOS это прямой аргумент в пользу закрытых словарей, JSON Schema и versioned contracts до подключения downstream consumers.
+
+---
+
+# B. Full grain inventory
+
+## B1. Полный инвентарь переносимых зёрен
+
+Оценка usefulness: `5` — основа v0.1; `4` — сильный дополнительный сигнал; `3` — полезная гипотеза; `2` — только bounded experiment; `1` — не переносить.
+
+| Grain | Sepia location | Primary source | Evidence level | AMOS usefulness | Target layer |
+|---|---|---|---|---:|---|
+| Явное разделение measured findings и editorial prescriptions | [`SKILL.md` L11](https://github.com/Nanako0129/sepia/blob/d8a0f948cc46a0ba0d610df7458c4e8943bfe51a/skills/sepia/SKILL.md#L11), [`sources.md` L140–142](https://github.com/Nanako0129/sepia/blob/d8a0f948cc46a0ba0d610df7458c4e8943bfe51a/research/sources.md#L140-L142) | Не внешний механизм; хороший research hygiene | H-S, поддержано историей PR #7 | **5** | E1/E2 governance |
+| Untrusted-input boundary: текст и ссылки — данные, не инструкции/authority | [`SKILL.md` L13–15](https://github.com/Nanako0129/sepia/blob/d8a0f948cc46a0ba0d610df7458c4e8943bfe51a/skills/sepia/SKILL.md#L13-L15) | Общая security practice | H-S | **5** | ingestion/security |
+| Сначала извлечь facts, claims, intent; затем проверить отсутствие invention | [`SKILL.md` L41–48](https://github.com/Nanako0129/sepia/blob/d8a0f948cc46a0ba0d610df7458c4e8943bfe51a/skills/sepia/SKILL.md#L41-L48) | Faithful summarization / claim extraction важнее, чем упомянутые редакторские studies | H-S → I-AMOS | **4** | E1→E2 |
+| Никогда не выдумывать versions/numbers/timestamps/quotes; missing → TODO/question | [`SKILL.md` L64–70](https://github.com/Nanako0129/sepia/blob/d8a0f948cc46a0ba0d610df7458c4e8943bfe51a/skills/sepia/SKILL.md#L64-L70) | Evidence-grounded generation practice | H-S | **5** | all projections |
+| Architecture sheet как многопроекционная декомпозиция | [`narrative-pass.md` L7–24](https://github.com/Nanako0129/sepia/blob/d8a0f948cc46a0ba0d610df7458c4e8943bfe51a/skills/sepia/references/narrative-pass.md#L7-L24) | StoryScope/NarraBench | M для corpus dimensions; H-S для target bands | **3** | candidate O/A |
+| Theme: explicit / implied / withheld | [`narrative-pass.md` L11–14, 26–40](https://github.com/Nanako0129/sepia/blob/d8a0f948cc46a0ba0d610df7458c4e8943bfe51a/skills/sepia/references/narrative-pass.md#L11-L40) | StoryScope | M как story-level feature; H-S как writing rule | **4** при жёстком epistemic typing | E2/A |
+| Causal-chain continuity как отдельный диагностический признак | [`narrative-pass.md` L42–55](https://github.com/Nanako0129/sepia/blob/d8a0f948cc46a0ba0d610df7458c4e8943bfe51a/skills/sepia/references/narrative-pass.md#L42-L55), [`rubric.md` L46–55](https://github.com/Nanako0129/sepia/blob/d8a0f948cc46a0ba0d610df7458c4e8943bfe51a/skills/sepia/references/rubric.md#L46-L55) | StoryScope; для настоящей extraction — CaTeRS/MAVEN-ERE | M на уровне story score; не edge accuracy | **3** | event graph |
+| Отличие origin/agency разрешения от самого outcome | [`narrative-pass.md` L57–67](https://github.com/Nanako0129/sepia/blob/d8a0f948cc46a0ba0d610df7458c4e8943bfe51a/skills/sepia/references/narrative-pass.md#L57-L67) | StoryScope | M/H-S | **3** | event/actor roles |
+| Time structure: linear / anachrony / braided | [`narrative-pass.md` L17–18, 69–81](https://github.com/Nanako0129/sepia/blob/d8a0f948cc46a0ba0d610df7458c4e8943bfe51a/skills/sepia/references/narrative-pass.md#L17-L18) | StoryScope; TimeML/Allen/MATRES сильнее | M как aggregate feature | **5** как design prompt, не schema | O temporal |
+| Revelation pacing отдельно от chronology | [`narrative-pass.md` L69–81](https://github.com/Nanako0129/sepia/blob/d8a0f948cc46a0ba0d610df7458c4e8943bfe51a/skills/sepia/references/narrative-pass.md#L69-L81) | StoryScope/NarraBench | M story-level | **5** | A/discourse time |
+| Recontextualization: поздний reveal меняет чтение раннего текста | [`narrative-pass.md` L73–80](https://github.com/Nanako0129/sepia/blob/d8a0f948cc46a0ba0d610df7458c4e8943bfe51a/skills/sepia/references/narrative-pass.md#L73-L80), [`rubric.md` L67–77](https://github.com/Nanako0129/sepia/blob/d8a0f948cc46a0ba0d610df7458c4e8943bfe51a/skills/sepia/references/rubric.md#L67-L77) | StoryScope | M как ordinal rating; отношение не аннотировано | **5** как AMOS seed | A/evolution |
+| Actor/social graph: sparse topology, sign, antagonistic clustering | [`narrative-pass.md` L98–111](https://github.com/Nanako0129/sepia/blob/d8a0f948cc46a0ba0d610df7458c4e8943bfe51a/skills/sepia/references/narrative-pass.md#L98-L111) | Nonaka & Perry | M в fiction corpus; extraction proxy слаб | **3** после разделения mention/semantic graph | A/R |
+| QUD: один или несколько неявных вопросов, на которые отвечает block | [`discourse-pass.md` L5–19](https://github.com/Nanako0129/sepia/blob/d8a0f948cc46a0ba0d610df7458c4e8943bfe51a/skills/sepia/references/discourse-pass.md#L5-L19) | QUDsim; QUD parser/QUDSELECT сильнее | M representation; H-S recipe | **5** | A/context compilation |
+| Discourse moves: comparison, verification, contradiction, consequence, procedure, reflection, digression | [`discourse-pass.md` L9–19](https://github.com/Nanako0129/sepia/blob/d8a0f948cc46a0ba0d610df7458c4e8943bfe51a/skills/sepia/references/discourse-pass.md#L9-L19) | QUDsim taxonomy; PDTB/RST for mature labels | Частично M, частично H-S | **4** | A/discourse |
+| Отдельный анализ middle/body и структурной позиции | [`discourse-pass.md` L21–43](https://github.com/Nanako0129/sepia/blob/d8a0f948cc46a0ba0d610df7458c4e8943bfe51a/skills/sepia/references/discourse-pass.md#L21-L43) | Tripto et al.; Russell et al. | M в authorship setting | **2** | benchmark slicing only |
+| `No quote, no signal`: каждый диагноз несёт supporting span | [`rubric.md` L7–12](https://github.com/Nanako0129/sepia/blob/d8a0f948cc46a0ba0d610df7458c4e8943bfe51a/skills/sepia/references/rubric.md#L7-L12) | Не нужен внешний paper; аналог standoff annotation | H-S → I-AMOS | **5** | provenance |
+| `N/A`, не форсировать label; не сводить разнородные признаки к aggregate score | [`rubric.md` L14–22](https://github.com/Nanako0129/sepia/blob/d8a0f948cc46a0ba0d610df7458c4e8943bfe51a/skills/sepia/references/rubric.md#L14-L22) | Хорошая annotation practice | H-S | **5** | extraction/gates |
