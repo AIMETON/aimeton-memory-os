@@ -12,6 +12,16 @@ Status: immutable research-history artifact.
 - Git blob SHA: `91592ed7b343d0e92a7fdff9a54b05e433043fbc`
 - Content policy: stored verbatim; no corrections, condensation or reconciliation applied.
 
+## Independent audit artifact
+
+- File: `Аудит AMOS Semantic Layer.md`
+- Origin: owner-supplied independent AI-scientist audit of the primary report
+- Original size: `21210` bytes
+- Original SHA-256: `c9a8a6b6b06233eaa627f7bcf993cc7a7ffe0152955400a3c38d5681d526f3d9`
+- Git blob SHA: `b5b47035eebf834e778ff6ba7ac27243ab3e5c3e`
+- Content policy: stored verbatim; auditor claims are preserved even where AIMETON's later cross-review disagrees.
+- AIMETON cross-review: `INDEPENDENT_AUDIT_DELTA.md`
+
 ## Research object
 
 - Upstream: https://github.com/Nanako0129/sepia
@@ -31,8 +41,8 @@ Status: immutable research-history artifact.
 
 ## Epistemic boundary
 
-The archived report is evidence of the external research analysis itself. It is **not** automatically normative AMOS architecture and does not by itself validate its proposed schema, relation taxonomy, metrics or roadmap.
+The archived report and independent audit are evidence of external research analyses. They are **not** automatically normative AMOS architecture and do not by themselves validate proposed schemas, relation taxonomies, metrics or roadmaps.
 
-The AMOS-owned interpretation/decision is maintained separately in the derived research baseline and related Issues. This separation preserves:
+The AMOS-owned interpretation/decision is maintained separately in the derived research baseline, cross-review delta and related Issues. This separation preserves:
 
-`source research != AIMETON interpretation != adopted architecture != validated implementation`.
+`source research != external audit != AIMETON interpretation != adopted architecture != validated implementation`.
