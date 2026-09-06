@@ -1,0 +1,181 @@
+    { "id": "EV_STOP", "type": "Event", "label": "queue stopped accepting jobs", "event_time": "10:14" },
+    { "id": "ST_POOL", "type": "State", "label": "worker pool exhausted", "valid_from": "10:11" },
+    { "id": "C1", "type": "Claim", "label": "network error caused the stop", "status": "disputed" },
+    { "id": "IR7", "type": "InterpretationRevision", "label": "causal assessment revised after trace" }
+  ],
+  "relations": [
+    { "subject": "ST_POOL", "predicate": "before", "object": "EV_STOP", "explicitness": "explicit", "source_ref": "E7" },
+    { "subject": "E7", "predicate": "weakens", "object": "C1", "explicitness": "inferred", "source_ref": "E7" },
+    { "subject": "E7", "predicate": "recontextualizes", "object": "E1", "explicitness": "inferred", "source_ref": "E7" },
+    { "subject": "IR7", "predicate": "changes_interpretation_of", "object": "C1", "explicitness": "derived", "source_ref": "E7" }
+  ]
+}
+```
+
+Обратите внимание: даже здесь `worker pool exhausted causes stop` не создано автоматически. E7 явно устанавливает более раннее состояние, но причинная связь требует mechanism claim или verification.
+
+---
+
+# H. Benchmark proposal
+
+## H1. Цель
+
+Benchmark должен отвечать не «насколько красиво строится граф», а «может ли AMOS безопасно отличить сказанное от выведенного, время события от времени сообщения и причину от соседства». Предлагается `AMOS-SRL-Bench v0.1`, bilingual, span-grounded, document- и cross-document-level.
+
+## H2. Минимальный corpus
+
+**84 документа: по 12 на каждый из 7 обязательных типов; 42 русских и 42 английских.**
+
+| Type | RU | EN | Особые конструкции |
+|---|---:|---:|---|
+| GitHub Issue | 6 | 6 | repro, expected/actual, duplicate, assignee, hypothesis |
+| PR discussion | 6 | 6 | reply graph, code refs, review, correction, approval |
+| ADR | 6 | 6 | alternatives, comparison, decision, supersession, conditions |
+| Postmortem | 6 | 6 | absolute/relative time, false leads, causal chain, action items |
+| Site Auditor report | 6 | 6 | observation, screenshot/DOM evidence, severity, verification |
+| Engineering note/report | 6 | 6 | claims, experiments, caveats, units, recommendation |
+| User–agent conversation | 6 | 6 | speaker attribution, implicit QUD, correction, preference/decision changes |
+
+Не менее 14 наборов должны образовывать cross-document packs: например `issue → PR → ADR/postmortem`, где одна сущность/решение меняется во времени. Размер отдельного документа — ориентировочно 500–2,500 tokens, но split следует балансировать не только по длине, а по relation density и complexity.
+
+### Data policy
+
+- public or explicitly authorized/anonymized artifacts;
+- secrets/PII redaction до annotation;
+- licenses and redistribution rights recorded;
+- raw artifact immutable; annotation standoff;
+- train/dev/test split по project/thread, чтобы не было entity/template leakage;
+- hidden challenge set с новыми projects и более поздним временем.
+
+## H3. Annotation layers
+
+1. Structural blocks/EDUs and exact spans.
+2. Entity mentions, nested entities, canonical entities, coreference candidates.
+3. Event/state mentions, predicates and participant roles.
+4. Claims, source/holder, polarity, modality, factuality, explicit vs inferred.
+5. Temporal expressions, normalized intervals, event/valid/observation/assertion/revelation times and interval relations.
+6. Causal relations with label (`cause/enable/precondition/prevent/contribute/trigger/terminate`), directness, mechanism span and negative `before_not_cause` examples.
+7. Evidence relations (`cites/supports/corroborates/contradicts/refutes/verifies/weakens/qualifies`).
+8. QUD anchor/question/answer, directness and type.
+9. Discourse moves/relations.
+10. Operational actor relations and authority scope.
+11. Supersession/recontextualization/interpretation revision.
+12. Projection decision: allowed in A/O/R/V, quarantined, or rejected — with reason.
+
+Два доменных annotator на документ плюс adjudicator. Для QUD/theme разрешены multiple acceptable labels и distributional agreement; для spans/IDs/times/explicit cause нужен stricter gold.
+
+## H4. Adversarial/negative controls
+
+Каждый split должен содержать минимальные пары:
+
+- `A before B` без cause vs explicit `A caused B`;
+- два похожих названия разных entities vs alias одного entity;
+- same topic vs `is_a`/`same_as`;
+- citation that mentions target vs citation that supports target;
+- source report vs direct observation;
+- negated, hypothetical, planned and failed event;
+- correction by unauthorized speaker vs authoritative decision;
+- different valid times remove apparent contradiction;
+- later reveal changes interpretation but не изменяет E0;
+- `supersedes` without contradiction and contradiction without supersession;
+- character/system co-occurrence without interaction;
+- explicit thesis vs plausible inferred theme;
+- Russian free word order, dropped subject, case alternation, aspect and ambiguous connective;
+- disclosure order opposite event order;
+- quoted false claim where surrounding author rejects it.
+
+## H5. Metrics
+
+| Metric | Definition |
+|---|---|
+| **Entity span P/R/F1** | Strict and overlap-matched; nested entities scored explicitly |
+| **Entity linking/coref F1** | B³/CEAF or pairwise plus false-merge rate; cross-document reported separately |
+| **Event/state P/R/F1** | Trigger/span, type, modality and participant roles |
+| **Relation P/R/F1** | Predicate correct **and** endpoints correct; strict span-grounded and relaxed endpoint versions |
+| **Temporal accuracy** | Relation F1 + temporal-graph consistency/satisfiability + event/discourse-clock confusion rate |
+| **Causal precision/recall** | Per subtype; explicit and inferred separately |
+| **Causal hallucination rate** | Extracted causal edges with no gold causal relation / all predicted causal edges; `before_not_cause` slice mandatory |
+| **Claim/source accuracy** | Proposition boundary, holder/source, polarity, modality, factuality |
+| **Evidence relation accuracy** | `cites` vs `supports/refutes/verifies`; rationale span sufficiency |
+| **QUD accuracy** | Anchor F1, question answerability/groundedness human score, semantic question match, answer directness/type; exact string not primary |
+| **Discourse accuracy** | EDU segmentation + relation/move macro-F1; multi-label scoring |
+| **Provenance completeness** | % accepted records with resolvable artifact, exact span/hash, extractor/run/version and source attribution |
+| **False ontology promotion rate** | Inferred/ambiguous records incorrectly accepted into O/R/V / all promoted records; severity-weighted variant |
+| **Cross-document relation quality** | Entity/event coref, supersession, contradiction/recontextualization precision/recall across artifacts |
+| **Calibration** | ECE/Brier/reliability curves by relation family, language, domain and explicitness |
+| **Abstention quality** | Risk–coverage curve; precision at accepted coverage; correct use of unknown/N/A |
+
+### Engineering go/no-go targets for MVP
+
+Это **предлагаемые targets, не опубликованные результаты**:
+
+- provenance completeness for accepted records: **100%**;
+- strict causal precision: **≥0.90**, causal hallucination rate on negative controls **≤0.05**;
+- high-severity false ontology promotion: **0**; overall O/R/V false promotion **≤0.01**;
+- temporal graph consistency: **≥0.99** accepted bundles;
+- accepted `same_as/owns/controls/approves/refutes` precision: **≥0.95**;
+- RU–EN gap по core entity/relation F1: **≤10 percentage points**;
+- metrics reported at fixed coverage; system may abstain.
+
+Если эти thresholds не достигнуты, v0.1 остаётся shadow/A-only extractor и не формирует O/R/V автоматически.
+
+## H6. Baselines and ablations
+
+| Run | Что проверяет |
+|---|---|
+| Metadata/rules only | Насколько далеко можно пройти без LLM; особенно Git/issue/PR/time identifiers |
+| Classical NLP only | NER/SRL/OpenIE/temporal/discourse baseline |
+| Structured LLM only | Верхний high-recall candidate generator без gates |
+| LLM + schema/type gates | Польза closed vocabulary |
+| Hybrid + temporal solver + causal gate | Полная proposed pipeline |
+| Hybrid minus QUD | Добавочная ценность QUD для retrieval/ContextBundle |
+| Hybrid minus recontextualization | Добавочная ценность revision model в long history |
+| Hybrid with Sepia-only rubric prompts | Проверка, даёт ли Sepia что-то сверх mature NLP; ожидаемо слабый extraction baseline |
+| RU translated-from-EN vs native RU | Выявление translation artifacts и реальной language calibration |
+
+Release decision должен основываться на paired bootstrap/confidence intervals и error severity, а не на одном aggregate score. Отдельно публиковать результаты по language/domain/relation family/explicitness.
+
+---
+
+# I. What to reject
+
+## I1. Механизмы, которые AMOS брать не должен
+
+| Reject | Почему это есть в Sepia | Почему вредно/не нужно AMOS | Допустимое остаточное применение |
+|---|---|---|---|
+| **AI-vs-human detection как цель** | Основная задача skill и StoryScope classifier | Не отвечает «что сказано/когда/почему»; создаёт attribution bias | Только исторический контекст исследований |
+| **Model fingerprints и угадывание author model** | Routing по model family/version | Стиль ≠ identity/authority/truth; риск ложной атрибуции | Никакого влияния на semantic graph |
+| **Human/AI corpus means как thresholds отдельного текста** | Calibration tables 1–5 и percentages | Ecological fallacy; domain/language/model drift | Только benchmark strata или исследовательская гипотеза |
+| **Рецепт “выбрать 3–5 human-leaning moves”** | Fiction generation workflow | Не semantic extraction; искусственно деформирует evidence | Не переносить |
+| **Aim band / rarity move / leave slack** | Humanization design | Оптимизирует литературный профиль, не точность | Не переносить |
+| **74/18/8 replace/delete/insert** | Editing-study ratio | Доля edits не связана с semantic fidelity | Можно изучать только для отдельного editor product |
+| **Sentence rhythm, punctuation, phrase bans, rule-of-three** | Style pass/humanizer | Language/model/venue-specific; может влиять на content segmentation ошибочно | Не подавать в extractor features |
+| **Chinese calibration как proxy русского** | Единственная language calibration | Другой язык, corpus, model era и task | Перенести только принцип «нужна локальная calibration» |
+| **Fiction-specific targets**: ending mode, sensory density, moral ambiguity, protagonist introduction, fourth wall | StoryScope core + narrative pass | Не соответствуют issue/ADR/RCA; могут исказить технический текст | Отдельный optional narrative analytics module вне AMOS core |
+| **“Loosen causal chain”** | Humanization fiction rule | В postmortem/engineering memory наоборот нужна точная causal chain | Только generation advice для fiction |
+| **Co-occurrence + sentiment = social relation** | Nonaka-based actor network | Co-presence не доказывает interaction/support/opposition; недиректированное binary edge теряет смысл | Mention graph, candidate generation, graph metrics |
+| **“Sparse/negative graph is more human” как target** | Fiction authorship result | Нормативно и доменно бессмысленно для организаций/систем | Никакого projection effect |
+| **QUD type frequency как желательная норма** | Sepia предлагает comparison/verification против frequent consequence/procedure | Corpus distribution не предписывает нужный discourse | Use labels, not target proportions |
+| **Один QUD на каждый абзац** | Упрощённый ручной check | Paragraph ≠ discourse unit; 0..N questions possible | Начальный UI heuristic, не schema cardinality |
+| **Outline “first sentences form clean summary → machine-shaped”** | Community-origin rule | Не semantic evidence; технические документы намеренно structured | Не переносить |
+| **Forced closest categorical value** | StoryScope feature application prompt | Стирает unknown/ambiguity, создаёт false certainty | Запретить; кандидаты + abstention |
+| **Fuzzy label normalization без provenance** | Upstream taxonomy build/application | Может незаметно склеить разные relations | Только offline taxonomy exploration с audit log |
+| **Story-level ordinal score как relation evidence** | Recontextualization/causal continuity etc. | Нельзя восстановить endpoints/spans/holder/time | Использовать лишь как document diagnostic |
+| **Citation presence = support** | Domain rules говорят “claim carries artifact” | Artifact может противоречить, не относиться или быть неавторитетным | Сначала `cites`; `supports` после entailment/scope gate |
+| **Implicit theme/motivation = claim/fact** | Narrative analysis нуждается в interpretation | Высокий hallucination risk, стирает границу source/extractor | InterpretationCandidate only |
+| **One-case behavioral eval как evidence** | PR #24 | Обе ветви 1.00; нет power/coverage; не semantic task | Взять лишь paired harness pattern |
+| **LLM self-rubric без external gold** | Operational skill просит self-diagnosis | Same-model correlated errors и anchoring | Candidate generation; benchmark/adjudication отдельно |
+| **Vendor prompting guidance** | Model-specific prose tables | Version-bound и unmeasured для semantics | Не использовать в ontology/extraction |
+
+## I2. Значимые изменения репозитория и их смысл
+
+| PR/Issue | Что изменилось | Evidence class | Урок для AMOS |
+|---|---|---|---|
+| [PR #7](https://github.com/Nanako0129/sepia/pull/7) | Отделены research evidence и Sepia inference; удалены неподтверждённые thresholds, aggregate/authorship claims и часть чисел | Repo governance | Сильное положительное зерно: каждое правило должно иметь provenance/evidence class |
+| [PR #24](https://github.com/Nanako0129/sepia/pull/24) | Добавлен behavioral eval на одном release-note example; baseline и Sepia по 1.00 | Очень слабый empirical check | Нужен многодоменный relation benchmark, negative controls, uncertainty |
+| [PR #168](https://github.com/Nanako0129/sepia/pull/168) | Hemingway voice/profile с одним worked example | H-S, n=1 illustration | Voice/style отделить от semantic extraction полностью |
+| [PR #229](https://github.com/Nanako0129/sepia/pull/229) | Sentence-rhythm check и Chinese calibration; часть популярных чисел отклонена | Один corpus + marked heuristics | Хороший принцип bounded calibration, но непереносимые features |
+| [PR #231](https://github.com/Nanako0129/sepia/pull/231) | Judge result moved after rationale | Bounded engineering observation | Evidence-first output полезен, но требует независимой проверки |
+| [PR #232](https://github.com/Nanako0129/sepia/pull/232) | Deletion/reversion tests добавлены из editing stylometry | Measured editing association | Не имеет semantic value |
+| [PR #234](https://github.com/Nanako0129/sepia/pull/234) | README/evidence claims исправлены и уточнены | Documentation correction | Репозиторий быстро меняется; нельзя зависеть от prose contract |
+| [Issue #227](https://github.com/Nanako0129/sepia/issues/227) | Human-readable `Voice fit` был воспринят registry как typed record; professional routing удалили | Production interface failure | Closed vocabularies, schema validation и consumer contract обязательны **до** graph integration |
