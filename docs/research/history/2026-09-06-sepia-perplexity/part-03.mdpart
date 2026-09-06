@@ -1,0 +1,145 @@
+| Группа | Реконструируемое отношение | Основание в Sepia | Что на самом деле наблюдается | Риск |
+|---|---|---|---|---|
+| Event/causal | `causes`, `caused_by` | causal-chain continuity; «beat caused by previous beat» | Читательская/story-level оценка связанности | adjacency подменяет cause |
+| Event/causal | `enables` | postmortem: factor says what it enabled | Явный causal claim в RCA | factor list может быть post-hoc rationalization |
+| Event/causal | `triggers`, `resolution_driven_by` | protagonist choice / chance / institution drives turn | Агентность turning point | не задан критерий directness/necessity |
+| Event | `results_in`, `has_consequence` | consequence paragraph; plot consequences | Discourse/event outcome | следование в тексте не доказывает результат |
+| Temporal | `precedes`, `follows`, `during` | chronology, beat list, time jumps | Event order или text order, часто не различены | event time смешивается с discourse order |
+| Temporal/discourse | `revealed_after`, `withheld_until` | delayed/back-loaded disclosure | Порядок предоставления знания читателю | это не время события |
+| Evolution | `recontextualizes` | reveal recolors earlier text | Ordinal story-level depth | отсутствует target span и тип изменения |
+| Discursive | `answers` | QUD per paragraph | Сгенерированный implicit question | субъективность, не 1:1 |
+| Discursive | `compares_with` | comparison move | Риторический move | сравнение не означает similarity/equality |
+| Discursive/evidential | `verifies`, `contradicts`, `doubts` | paragraph questions earlier account | Внутритекстовый discourse move | narrator/character/source могут различаться |
+| Thematic | `expresses`, `implies`, `reinforces` | explicit/implied theme; unity | Story-level interpretation | inferred theme легко повысить до fact |
+| Plot | `echoes`, `parallels`, `integrates_with` | subplot echo/parallel integration | Тематическая связь линий | high subjectivity |
+| Actor | `participates_in`, `acts_on` | protagonist action/resolution | Agent-event participation | coreference/role ambiguity |
+| Actor | `knows`, `interacts_with` | knowledge alignment/social network | Co-presence, dialogue или narrator report | co-occurrence ≠ interaction/knowledge |
+| Actor/affect | `supports_person`, `opposes_person` | signed affect/antagonistic ties | Sentiment in co-occurrence window | sentiment ≠ durable relation |
+| Evidential | `supports`, `cites`, `points_to` | claims carry links/file:line/PR | Artifact attached to assertion | citation presence ≠ entailment |
+| Evidential | `weakens`, `qualifies` | doubts, conditions, uncertainty | Stance/modality | scope holder must be explicit |
+| Version/evolution | `replaces`, `reverts`, `supersedes` | edit/reversion; versions | Text/edit succession | revision ≠ epistemic invalidation |
+
+**Вывод:** наиболее интересны не сами Sepia labels, а обнаруженные ортогональные оси: `world relation`, `discourse relation`, `evidential stance`, `source`, `time`, `derivation`. Именно их нельзя сжимать в одно ребро без атрибутов.
+
+## C2. Предлагаемый закрытый vocabulary AMOS v0.1
+
+### Правило канонизации
+
+- В хранилище записывается одно каноническое направление; inverse predicates генерируются query layer. Например, хранить `before(A,B)`, но не дублировать `after(B,A)`.
+- `results_in` — query alias для `causes` или `brings_about_state`, а не неразличимое универсальное ребро.
+- `supports`/`contradicts` относятся к **proposition/claim**, а не произвольному entity.
+- `supersedes` относится к версиям/решениям/claims, но не является Allen temporal relation.
+- Для каждого family допускается `unknown`/`no_relation`; extractor не обязан выбрать ближайшее значение.
+
+### 1. Reference, identity и provenance
+
+| Canonical predicate | Domain → range | Meaning | Sepia seed / research support | AMOS axis | Главный риск / gate |
+|---|---|---|---|---|---|
+| `mentions` | TextBlock → SemanticNode | Span явно называет/обозначает node | quote-per-signal; NER | A | surface ambiguity; обязателен mention span |
+| `refers_to` | Mention → Node | Mention разрешён к node | NER/coreference | O/A | entity resolution error; хранить candidate set |
+| `same_as` | Node → Node | Проверенная идентичность | KG practice | O | similarity ≠ identity; high threshold/manual merge |
+| `alias_of` | Label/Mention → Node | Альтернативное имя | NEREL | O | scoped/temporal alias |
+| `corefers_with` | Mention/EventMention → Mention/EventMention | Один discourse referent/event | MAVEN-ERE, coref | O/A | не сливать nodes до gate |
+| `quotes` | TextBlock/Claim → SourceSpan | Дословное воспроизведение | professional pass | A | verify byte/text hash and quotation boundary |
+| `cites` | Claim/TextBlock → EvidenceArtifact | Формальная ссылка | domain rules | A | citation ≠ support |
+| `derived_from` | DerivedNode/Relation → Evidence/Activity | Provenance derivation | W3C PROV | A | не заменяет semantic justification |
+
+### 2. Ontological/compositional
+
+| Canonical predicate | Domain → range | Meaning | Research support | AMOS axis | Risk / gate |
+|---|---|---|---|---|---|
+| `instance_of` | Entity → Class | Экземпляр класса | KG/OWL | O | ontology version + type confidence |
+| `is_a` | Class → Class | Subclass/generalization | ontology practice | O | topical similarity ≠ subclass |
+| `part_of` | Entity/Event/Artifact → Entity/Event/Artifact | Мереологическая часть | Frame/ERE, MAVEN-ERE subevent | O | membership/participation ≠ part |
+| `subevent_of` | Event → Event | Компонент и spatiotemporally contained | MAVEN-ERE | O | causal precursor ≠ subevent |
+| `member_of` | Agent/Team → Group/Organization | Членство | NEREL/operational docs | R/O | time validity + authority source |
+| `state_of` | State → Entity/System | Holder состояния | semantic graphs | O | holder/source ambiguity |
+| `located_in` | Entity/Event → Place | Местоположение | NEREL/FrameNet | O | event location vs org headquarters |
+| `has_version` | Artifact/System → Version | Версионная привязка | Sepia domain rules | O | version must be source-backed |
+
+### 3. Predicate–argument / participation
+
+| Canonical predicate | Domain → range | Meaning | Research support | AMOS axis | Risk / gate |
+|---|---|---|---|---|---|
+| `agent_of` | Agent → Event | Намеренный/каузирующий участник | PropBank, FrameNet, UDS | O/R | grammatical subject ≠ agent |
+| `patient_of` | Entity → Event | Участник, на который воздействуют | PropBank/FrameBank | O | fine-grained roles may differ |
+| `experiencer_of` | Agent → State/Event | Носитель восприятия/состояния | FrameNet/FrameBank | O | narrator inference ≠ reported state |
+| `instrument_of` | Entity/System → Event | Средство выполнения | SRL/FrameNet | O | tool mention ≠ instrument |
+| `recipient_of` | Agent/Entity → Event | Получатель передачи/сообщения | SRL | O/R | addressee vs beneficiary |
+| `source_of` | Agent/Place/Artifact → Event | Источник перемещения/сообщения | FrameNet | O/A | не путать с evidence source |
+| `destination_of` | Entity/Place → Event | Цель движения/передачи | FrameNet/FrameBank | O | intended vs actual destination |
+| `result_state_of` | State → Event | Состояние, непосредственно созданное событием | event semantics | O | требует causal support, не лишь temporal after |
+| `participates_in` | Entity → Event | Неспецифицированная роль | MAVEN/NEREL | O | использовать только если role unknown |
+
+### 4. Temporal — interval algebra и привязки
+
+| Canonical predicate | Domain → range | Meaning | Research support | AMOS axis | Risk / gate |
+|---|---|---|---|---|---|
+| `before` | TemporalEntity → TemporalEntity | X полностью раньше Y | Allen, OWL-Time, TimeML | O | text order ≠ event order |
+| `meets` | Interval → Interval | X заканчивается при начале Y | Allen/OWL-Time | O | granularity uncertainty |
+| `overlaps` | Interval → Interval | X начинается раньше Y и пересекается | Allen/OWL-Time | O | coarse timestamps may only allow possible overlap |
+| `starts` | Interval → Interval | Общее начало; X короче | Allen/OWL-Time | O | endpoint precision |
+| `during` | Interval → Interval | X строго внутри Y | Allen/OWL-Time | O | `part_of` is not temporal containment |
+| `finishes` | Interval → Interval | Общее окончание; X короче | Allen/OWL-Time | O | endpoint precision |
+| `equals_time` | TemporalEntity → TemporalEntity | Совпадающие интервалы | Allen/OWL-Time | O | confidence must account for granularity |
+| `simultaneous_with` | Event → Event | Coarse equality when interval detail unavailable | TimeML/MAVEN-ERE | O | do not overclaim exact endpoints |
+| `valid_during` | State/Claim/Role → Interval | Valid time | OWL-Time + bitemporal DB practice | O/R | valid time ≠ recorded time |
+| `observed_at` | Observation → Instant/Interval | Когда наблюдали | AMOS requirement | E1/O | observation ≠ event occurrence |
+| `asserted_at` | Claim/Decision → Instant | Когда источник сформулировал | FactBank/PROV | E2/E3 | assertion time ≠ validity |
+| `recorded_at` | Record → Instant | Transaction/system ingestion time | bitemporal practice | governance | do not overwrite original clock |
+| `revealed_at` | Information/Claim → DiscoursePoint | Когда адресат получает информацию | StoryScope seed; I-AMOS formalization | A | relative to audience/context |
+
+Inverse Allen relations (`after`, `met_by`, `overlapped_by`, `started_by`, `contains`, `finished_by`) вычисляются запросом. `continues` моделируется открытым интервалом или aspectual event; `starts`/`ends` как события допускаются отдельно, если они выражены текстом.
+
+Query/API vocabulary может также экспонировать `starts_at(Event,Instant)`, `ends_at(Event,Instant)`, `continues_through(State,Interval)`, `revealed_after(Information,Event)` и inverse aliases `caused_by`, `enabled_by`, `recontextualized_by`. Это **вычисляемые представления** над каноническими рёбрами/полями, а не дополнительные дублирующие записи.
+
+### 5. Causal и conditional
+
+| Canonical predicate | Domain → range | Meaning | Research support | AMOS axis | Risk / gate |
+|---|---|---|---|---|---|
+| `causes` | Event/State → Event/State | При данном контексте head приводит к tail; механизм заявлен/подтверждён | CaTeRS, MAVEN-ERE | O/A | **никогда** не выводить из `before`/adjacency |
+| `enables` | Event/State → Event | Создаёт возможность/условие, но не достаточно само по себе | CaTeRS | O/A | necessary vs merely helpful |
+| `precondition_for` | Event/State → Event | Без head tail не случился бы в модели источника | MAVEN-ERE | O/A | counterfactual claim must be attributed |
+| `prevents` | Event/State → Event/State | Делает target неслучившимся/невозможным | CaTeRS | O/A | absence is hard to verify |
+| `terminates` | Event → State/Event | Вызывает окончание состояния/процесса | CaTeRS cause-to-end | O | distinguish from coincident end |
+| `contributes_to` | Event/State → Event/State | Ненулевой фактор без sufficiency/necessity claim | RCA practice; I-AMOS | O/A | catch-all can hide uncertainty; require mechanism text |
+| `triggers` | Event → Event | Ближайший onset trigger; subtype of causal candidate | RCA practice; I-AMOS | O/A | operational definition required |
+| `correlates_with` | Observation/Variable → Observation/Variable | Измеренная association без causal claim | scientific practice | A | never promote to `causes` |
+| `counterfactually_blocks` | State/Event → Event | Explicit «if absent/present, event would not occur» | causal analysis | A | source-relative hypothetical, not observed fact |
+
+Атрибуты causal edge: `strength={necessary,sufficient,contributing,enabling,triggering,preventing,unknown}`, `directness={direct,indirect,unknown}`, `locus={onscreen,offstage,external,cross_document}`, `mechanism_span`, `counterfactual_status`. Общая транзитивность `causes` **не применяется автоматически**; любой closure — отдельная `rule_derived` relation.
+
+### 6. Evidential/epistemic
+
+| Canonical predicate | Domain → range | Meaning | Research support | AMOS axis | Risk / gate |
+|---|---|---|---|---|---|
+| `asserts` | Agent/Source → Claim | Источник явно выдвигает proposition | FactBank/PDTB | E2/A | attribution and quoted span mandatory |
+| `reports` | Source → Observation/Event/Claim | Source сообщает, не обязательно подтверждает | FactBank | E1/E2 | report ≠ observed/verified |
+| `observes` | Agent/System → Observation | Directly registered observation | AMOS | E1 | observation method required where available |
+| `supports` | Evidence/Claim → Claim | Делает target более обоснованным | FEVER/SciFact-inspired | A | citation/semantic relatedness ≠ support |
+| `corroborates` | IndependentEvidence → Claim/Observation | Независимое согласующееся свидетельство | evidence practice | A | independence must be modeled |
+| `contradicts` | Claim/Evidence → Claim | Несовместимое содержание в заданном scope | FEVER/PDTB | A | different times/scopes may reconcile |
+| `refutes` | Evidence/Claim → Claim | Contradiction плюс достаточное evidence/authority | SciFact/FEVER; I-AMOS gate | A | high-bar relation, never style inference |
+| `verifies` | Evidence/Procedure → Claim | Check succeeded under stated method/conditions | engineering/scientific practice | A | verification scope/time/conditions mandatory |
+| `weakens` | Evidence/Claim → Claim | Снижает support без refutation | I-AMOS | A | model confidence ≠ epistemic weakening |
+| `strengthens` | Evidence/Claim → Claim | Увеличивает support | I-AMOS | A | avoid scalar fabrication |
+| `qualifies` | Claim/TextBlock → Claim | Ограничивает scope/conditions/degree | PDTB/RST | A | attach exact qualifier |
+| `uncertain_about` | Agent/Source → Claim/Event | Источник выражает uncertainty | FactBank | A | extractor uncertainty is a separate field |
+| `denies` | Agent/Source → Claim/Event | Source commits to negative proposition | FactBank | A | denial ≠ external falsity |
+
+### 7. Discursive и QUD
+
+| Canonical predicate | Domain → range | Meaning | Research support | AMOS axis | Risk / gate |
+|---|---|---|---|---|---|
+| `raises` | TextBlock → Question | Вводит explicit/implicit issue | QUD theory | A | implicit question is candidate |
+| `anchored_in` | Question → TextBlock | Earlier trigger/context anchor | QUD parser/QUDSELECT | A | anchor may be non-local |
+| `answers` | TextBlock/Claim → Question | Direct answer compatible with QUD | QUD | A | multiple/partial answers allowed |
+| `partially_answers` | TextBlock/Claim → Question | Covers only part/one alternative | QUD | A | human adjudication may be needed |
+| `subquestion_of` | Question → Question | QUD dependency/hierarchy | QUD parser | A | do not force a tree if graph/stack uncertain |
+| `explains` | TextBlock/Claim → Claim/Event | Gives reason/mechanism | RST/PDTB | A | explanation by source ≠ verified cause |
+| `elaborates` | TextBlock/Claim → TextBlock/Claim | Adds detail without changing core proposition | RST | A | semantic overlap required |
+| `exemplifies` | TextBlock/Event → Claim/Concept | Instance/example | RST/QUDsim | A | anecdote ≠ general evidence |
+| `compares` | TextBlock/Claim → TextBlock/Claim | Sets common comparison frame | PDTB | A | no equality implied |
+| `contrasts` | TextBlock/Claim → TextBlock/Claim | Highlights difference | PDTB/RST | A | different scopes/times |
+| `concedes` | Claim/TextBlock → Claim | Acknowledges proposition before contrary main move | PDTB/RST | A | source stance needed |
+| `conditions` | Claim/TextBlock → Claim | Makes target conditional | PDTB | A | not actual event relation |
