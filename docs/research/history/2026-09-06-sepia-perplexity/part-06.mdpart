@@ -1,0 +1,186 @@
+- Relation points to exact spans supporting subject, predicate cue и object; если cue implicit, поле `predicate_span=null` и derivation=`model_inferred`.
+- Bind speaker/source, observation/assertion/recording times, and valid/event time independently.
+- Record extractor, model, prompt hash, code version, schema version and run id.
+
+### 6. Compatibility/evidence gate
+
+Последовательность gates:
+
+1. **Span gate:** offsets resolve to unchanged source and quote hash matches.
+2. **Schema gate:** closed predicate, legal subject/object types, required attributes.
+3. **Attribution gate:** source/speaker and polarity/modality are known or explicitly unknown.
+4. **Explicitness gate:** no derived/implicit candidate mislabeled explicit.
+5. **Temporal gate:** interval constraints are consistent; event/discourse/observation clocks not conflated.
+6. **Causal gate:** no cause from adjacency; mechanism/explicit cue/verification recorded.
+7. **Evidence gate:** `cites` is not automatically `supports`; entailment and scope assessed.
+8. **Authority gate:** source authority is domain-, role-, scope- and time-bound.
+9. **Conflict gate:** contradiction is retained as graph state, not silently resolved by confidence average.
+10. **Projection gate:** relation family is permitted in requested V/R/O/A projection and ContextBundle policy.
+
+### 7. Candidate O/A projection
+
+- `O`: stable entities, typed events/states, valid time, role assignments and accepted temporal relations.
+- `A`: evidence links, discourse/QUD, similarity, support/contradiction, precedents, interpretations and recontextualizations.
+- `R`: only explicit/authorized responsibilities, ownership and decisions.
+- `V`: explicit purpose/scope/goal propositions with current source/version.
+
+### 8. ContextBundle compilation
+
+Bundle должен включать не только top-k nodes, но:
+
+- requested graph slice;
+- exact evidence spans/links;
+- current and competing claims;
+- valid/as-of time;
+- confidence components and verification status;
+- unresolved QUDs;
+- superseded/recontextualized history, если она меняет interpretation;
+- explicit omissions/unknowns.
+
+## E3. Incremental processing и reversibility
+
+Новый artifact не запускает полную «перезапись знания». Он создаёт новый extraction run, candidates и возможные revision records. Слияние допустимо только для identity-stable mentions; любые изменяемые states/claims/roles получают valid intervals и history.
+
+При обновлении extractor/schema старые derived records не удаляются автоматически: создаётся новая version, проводится re-extraction и сравнение. Это позволяет объяснить, почему AMOS вчера и сегодня собрал разные ContextBundle.
+
+## E4. Что делать детерминированно, классическим NLP и LLM
+
+| Задача | Детерминированно | Classical/specialized NLP | LLM | Комбинация |
+|---|---|---|---|---|
+| Metadata, spans, thread/commit links | **Лучший выбор** | Не нужно | Не нужно | Parser validates LLM citations |
+| NER/coref/entity linking | IDs/mentions из платформы | **Лучший baseline** для span precision | Long-tail/domain candidates | Ensemble + resolver + no forced merge |
+| SRL/event roles | Syntax rules для очевидных patterns | **PropBank/FrameNet/FrameBank** | Domain-specific roles/ellipsis | NLP candidate + LLM normalization |
+| Open relation discovery | Regex/cues limited | OpenIE high recall | **LLM useful** для open vocabulary | LLM must map to closed schema or preserve raw relation |
+| Temporal normalization | **Date parser/rules** | TimeML/MATRES relation model | Implicit/long-distance hypotheses | Constraint solver adjudicates |
+| Causality | Explicit connectives high precision | Causal RE model | Mechanism extraction, cross-sentence | Conservative intersection + review |
+| Claims/attribution/factuality | Quotes/speaker metadata | FactBank-style models | Proposition splitting/stance in long context | Separate source factuality from model confidence |
+| RST/PDTB | Connective lexicon | Discourse parsers | Long-range implicit relations | Multi-label candidates |
+| QUD | Explicit `?` | QUD parser/QUDSELECT | Question generation/rewrite | scorer + human calibration |
+| Theme/recontextualization | Very limited | Topic models only | **LLM best candidate generator** | Derived-only, span/claim grounding and competing readings |
+| Projection decision | Schema rules | Calibrated family scores | Recommendation/explanation only | Deterministic policy owns promotion |
+
+## E5. Applicability by document type
+
+| Document type | Sepia-derived grains worth keeping | Mature additions required | Fiction-specific/rejected |
+|---|---|---|---|
+| **GitHub Issue** | exact repro; expected/actual; QUD «what is broken/what is needed»; severity; artifact links | metadata parsing, entity/event/coref, state transitions, duplicate/supersession, assignee authority | narrative rarity, theme unity, actor affect |
+| **PR discussion** | answer-first, code claim→file/commit, contradiction/correction, explicit uncertainty | reply topology, commit/diff anchors, review/approval events, decision extraction, temporal versioning | paragraph-shape/AI tells |
+| **ADR** | claims, alternatives/comparison, decision, conditions, consequences, recontextualization by later ADR | authority, decision status, `supersedes`, option/evidence mapping, valid time | narrative agency/ending mode |
+| **Postmortem** | strongest transfer: absolute timeline, wrong hypotheses, mechanisms, factor→enabled event, action owner | TimeML/Allen, causal taxonomy, counterfactuals, event coref, impact evidence, competing causal claims | «loosen causal chain» — прямо вредно для RCA |
+| **Technical documentation** | specificity, versions, code/artifact links, procedure/QUD | definitions, requirements, normative modality, API/version ontology, citation validation | humanizer fingerprints |
+| **Engineering report/note** | stance, caveats, number conditions, dead ends, comparison/verification | claim-evidence graph, methods/results, units, uncertainty, lineage | forced unevenness/digression |
+| **Scientific paper** | QUD, claims, comparison, qualification, citation spans | scientific IE, SciFact-like claim/rationale, experiment/method/dataset/results, citation stance | source presence as proof; AI attribution |
+| **Site Auditor report** | observation vs claim, exact URL/element/evidence, severity, recommendation, verification | DOM/screenshot/run provenance, page/version/time, reproducibility, issue clustering | literary theme/social affect |
+| **User–agent conversation** | per-message QUD, corrections, explicit uncertainty, revelation/recontextualization | speaker/audience, utterance time, tool-result provenance, commitments/decisions, revoked preferences | one-QUD-per-paragraph assumption |
+| **Long project history** | delayed revelation, supersession, recontextualization, disconnected actor threads | cross-document entity/event coref, bitemporal states, decision lineage, authority changes | story-level back-loading as quality target |
+
+## E6. Russian-language design
+
+Sepia имеет Chinese calibration, но его главный переносимый урок — **не использовать английские лексические маркеры и thresholds вне исходного корпуса**. Сама китайская калибровка ограничена одним Simplified Chinese QA corpus эпохи GPT-3.5 и прямо это признаёт в [`zh.md` L50–52](https://github.com/Nanako0129/sepia/blob/d8a0f948cc46a0ba0d610df7458c4e8943bfe51a/skills/sepia/references/languages/zh.md#L50-L52). Она не является мостом к русскому.
+
+### Относительно language-independent
+
+- distinction Entity/Event/State/Claim/Question/TimeInterval;
+- graph identity, provenance, closed predicates и type signatures;
+- Allen interval algebra и separate clocks;
+- conceptual cause/enable/prevent/precondition distinction;
+- source-relative claim/polarity/modality;
+- QUD anchor/answer structure как теория;
+- RST/PDTB-like abstract relation classes;
+- evidence boundaries и immutable E0;
+- recontextualization/revision record.
+
+### Требует русской калибровки
+
+| Area | Почему English transfer недостаточен | P0 response |
+|---|---|---|
+| Segmentation/EDU | свободнее word order, punctuation conventions, ellipsis, сложные бессоюзные конструкции | Russian parser + manual sample; не равнять sentence/paragraph и EDU |
+| Entity/coreference | nested entities, morphology, фамилии/инициалы, inflection, zero subjects, long-distance document relations | NEREL baseline; platform IDs first; Russian coref eval |
+| SRL/roles | падеж, предлог, вид/залог и construction alternations кодируют roles иначе | FrameBank mappings; retain case/preposition/features |
+| Temporality | вид, tense/aspect interaction, `уже/ещё/пока`, relative dates, reported plans | Russian TIMEX rules + bilingual annotated AMOS set; interval uncertainty |
+| Causality | `из-за`, `благодаря`, `поскольку`, `так как`, `поэтому`, бессоюзное следствие; concessive/conditional ambiguity | connective lexicon + dependency scope + negative controls |
+| Claim/evidence | reportative verbs, impersonal constructions, particles `якобы/мол/дескать`, negation scope, quotation conventions | source/holder annotation guide + FactBank-inspired labels |
+| QUD | question wording and anchor realization differ; implicit subjects and nominalization | Russian QUD pilot with human acceptability/groundedness, not translation-only |
+| Discourse | connective omission, participial/adverbial constructions, different EDU splits | Russian GUM/RST and RuRSTreebank calibration |
+
+### Российские ресурсы
+
+- [NEREL](https://aclanthology.org/2021.ranlp-1.100/) — наиболее полезный старт для nested entities, relations, events и document-level links: 56k entities, 39k relations, 29/49 types; его document RE baseline заметно слабее sentence-level, что реалистично предупреждает против «длинный контекст всё решит».
+- [FrameBank](https://github.com/olesar/framebank) и [описание FrameBank](https://ruslang.ru/doc/kashkin/2015/06.pdf) — около 4,000 target lexemes, 50k размеченных примеров и 91 semantic role; важен именно mapping морфосинтаксической конструкции к роли.
+- [Russian GUM RST study](https://arxiv.org/html/2409.14969v1) — parallel RST corpus 213 документов/12 genres, 25,223 EDU и 27 relation classes; показывает реальные различия сегментации/синтаксиса и более низкую end-to-end performance для русского.
+- [RuRSTreebank](https://rstreebank.ru/eng) — дополнительный ресурс, но жанровое и structural coverage следует проверить для AMOS.
+- RuRED, RuREBus и RuSERRC полезны как domain-specific RE corpora, но их малые/узкие домены не должны определять core ontology.
+
+В выполненном обзоре не найден зрелый русский temporal-event corpus, сопоставимый по охвату с MAVEN-ERE/TimeBank/MATRES. Это **не доказательство отсутствия любого ресурса**, а обозначение gap: AMOS следует взять language-neutral temporal schema и создать собственный Russian calibration set.
+
+### Что переносится без изменений, а что нет
+
+| Механизм | Transfer |
+|---|---|
+| `before/overlaps/during`, multi-clock model | Почти без изменений на уровне ontology; меняется extractor |
+| cause/enable/prevent distinction | Ontology переносится; cues/scope/model требуют русской разметки |
+| entity relation signatures | Core переносится; nested mentions/coref/morphology требуют NEREL-like model |
+| claim/evidence/source distinction | Переносится концептуально; attribution/negation/evidential markers калибруются |
+| QUD and discourse moves | Framework переносится; segmentation/questions/labels требуют Russian evaluation |
+| sentence rhythm, banned English phrases, model fingerprints | Не переносить |
+| Chinese frequency numbers | Не переносить вообще |
+
+---
+
+# F. Evidence boundary
+
+## F1. Нормативные определения
+
+| Status | Точное определение | Пример | Что не означает |
+|---|---|---|---|
+| `explicit` | Predicate/proposition непосредственно выражены source span; разумный annotator может указать lexical/syntactic cue | «Конфигурация вызвала отказ» | Что claim истинен |
+| `inferred` | Relation не утверждена буквально; extractor/annotator выводит её из контекста, implicature или world knowledge | «После config deploy очередь упала» → possible cause | Что inference является observation |
+| `derived` | Вычислено детерминированным правилом из уже записанных nodes/edges | `before(A,C)` из `before(A,B)` и `before(B,C)` | Что исходные edges verified; derivation confidence не независим |
+| `verified` | Claim/relation прошли объявленную процедуру проверки против evidence в указанном scope/time | test/run/log подтверждает fix в v2.4 | Универсальную и вечную истинность |
+| `authoritative` | Source/actor имеет признанную полномочность утверждать/решать в domain/scope/time | repo owner approves release | Что source безошибочен или evidence не нужен |
+
+Эти статусы ортогональны. Claim может быть `explicit + authoritative + unverified`; relation — `inferred + corroborated`; derived temporal edge — `derived + based_on_verified_edges`.
+
+### Mapping на E0–E4
+
+| AMOS level | Разрешённый semantic content | Обязательная граница |
+|---|---|---|
+| **E0 Raw Evidence** | Immutable artifact, metadata, original spans | Никакой интерпретации внутри artifact |
+| **E1 Observations** | Что человек/система непосредственно увидел, измерил или зафиксировал; method/time/source | Observation не обобщается в cause/fact автоматически |
+| **E2 Claims** | Source-attributed propositions, включая causal/temporal/normative claims | Assertion, polarity, modality, evidence status и authority разделены |
+| **E3 Decisions** | Explicit decision/approval/rejection с authorized actor, scope и effective time | Recommendation/plan/mention ≠ decision |
+| **E4 Derived Knowledge** | Rule/model synthesis, transitive temporal closure, summaries, themes, recontextualization assessments | Всегда `derived`, со ссылками на premises/run; не переписывает E0–E3 |
+
+Тип node (`Event`, `Claim`, `Decision`) и evidence level (`E0..E4`) — разные измерения. Например, E2 может содержать claim **о** событии, которое ещё не принято как O-event; E4 может содержать derived temporal edge между двумя verified E1 observations.
+
+## F2. Отдельные оси записи
+
+```text
+derivation_type:
+  quoted | explicit_paraphrase | implicit | model_inferred | rule_derived | human_asserted
+
+evidence_origin:
+  primary_evidence | derived_record
+
+verification_status:
+  unverified | corroborated | disputed | contradicted | verified | rejected
+
+authority_status:
+  unknown | non_authoritative | authoritative_for_scope | expired
+
+projection_status:
+  candidate | quarantined | accepted_O | accepted_A | accepted_R | accepted_V | superseded
+```
+
+Не следует использовать одно поле `confidence=0.91` как суррогат всех осей. Нужны как минимум:
+
+- `extraction_confidence`: насколько модель уверена, что текст выражает label;
+- `evidence_strength`: насколько найденные spans действительно поддерживают proposition;
+- `source_reliability`: оценка источника, если AMOS имеет такую политику;
+- `authority_fit`: имеет ли source полномочия для этого scope;
+- `temporal_certainty`: качество временной нормализации;
+- `calibration_profile`: на каком benchmark получена интерпретация score.
+
+## F3. Hard rules semantic extractor
+
+1. **Every node/relation candidate MUST preserve source artifact and exact source span.** Для implicit relation predicate span может отсутствовать, но endpoint/context spans обязательны.
