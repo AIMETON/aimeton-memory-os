@@ -1,0 +1,135 @@
+| **P0.2 Immutable ingestion + stable spans/hashes/run provenance** | Самая важная evidence boundary; делает каждую ошибку объяснимой | M | Offset drift при normalization/rendering | Artifact adapters | Round-trip test: каждый accepted record восстанавливает exact source quote; provenance completeness 100% |
+| **P0.3 Annotation guide + 14-document pilot (2/type, RU/EN)** | Рано обнаружит плохие definitions до 84-doc benchmark | M | Низкое agreement на causality/QUD | P0.1–P0.2 | Dual annotation; agreement/error taxonomy; revise labels before scale-up |
+| **P0.4 Build 84-document AMOS-SRL-Bench** | Даёт собственное evidence, а не веру в Sepia/LLM | H | Licensing, privacy, class imbalance | Guide/pilot | Frozen test split, 42 RU/42 EN, negative controls, cross-doc packs, adjudicated gold |
+| **P0.5 Metadata-first entity/event/claim baseline** | Быстро создаёт полезный A-layer с высокой provenance | M | False merges, proposition splitting errors | P0.1–P0.4 | Baselines: platform parser + NEREL/RU model + SRL/OpenIE + structured LLM; report P/R/F1 by family |
+| **P0.6 Four-clock temporal MVP + Allen subset** | Предотвращает критическую путаницу event/discourse/observation time | M | Relative/uncertain time normalization | P0.5, TimeML/OWL-Time study | `before/overlaps/during/simultaneous/unknown`, constraint solver; ≥.99 accepted-graph consistency |
+| **P0.7 Explicit-causality-only MVP** | Проверяет high-value relation с контролируемым hallucination risk | M | Low recall; Russian scope ambiguity | P0.5–P0.6, CaTeRS/MAVEN guidelines | Explicit cues + mechanism spans; precision ≥.90, negative-control hallucination ≤.05; otherwise A-only |
+| **P0.8 Evidence relation split: cites/supports/contradicts/verifies** | Не даёт ссылке превратиться в доказательство | M | NLI domain mismatch | Claim/source extraction | Strict rationale-span eval; `cites` deterministic, other labels candidate/gated |
+| **P0.9 Projection compatibility gate** | Реализует evidence-governed promise AMOS | M | Overly permissive policy | P0.1, P0.2, per-family calibration | Rule tests for explicit/inferred, source/authority, time, causality; zero high-severity false promotions |
+| **P0.10 QUD/discourse shadow mode** | Проверяет retrieval/context value без риска для O | M | Subjective gold, generation variance | Blocks/claims; QUD guide | Anchor/answerability/groundedness human eval; no projection promotion; ablation on ContextBundle usefulness |
+
+### P0 default scope cuts
+
+- Только closed core predicates; unknown relation stays raw/namespaced candidate.
+- `same_as`, `causes`, `refutes`, `owns`, `controls`, `approves` — high-precision or human-review paths.
+- Implicit themes, motivations, implicit causes, moral/affect edges — A-only candidates or off.
+- No automatic ontology induction.
+- No GraphRAG summaries until provenance-aware graph exists.
+- No use of AI-detection/style features.
+
+## P1 — после MVP semantic relation layer
+
+| Work item | Value | Cost | Risk | Dependency | Expected evidence / exit criterion |
+|---|---|---:|---|---|---|
+| **P1.1 Cross-document entity/event coreference** | Связывает issue→PR→ADR/postmortem и длинную проектную память | H | Catastrophic false merges | P0 benchmark, stable IDs | Cross-doc F1 + false-merge severity; reversible merge candidates |
+| **P1.2 Bitemporal states/roles/decisions** | Корректно отвечает «что было известно/действительно на дату» | H | Complex queries, incomplete end times | Temporal MVP, projection schema | As-of query tests; supersession closes intervals without deleting history |
+| **P1.3 Claim/evidence verifier** | Превращает A из citation graph в evidence graph | H | Domain NLI errors, source dependence | P0.8, FEVER/SciFact patterns | Rationale-grounded supports/refutes/NEI; calibration by domain/language |
+| **P1.4 Recontextualization / InterpretationRevision** | Уникально полезно для evolving memory | M/H | Subjective relation, over-triggering | Cross-doc coref, claims, time | Gold subset with before/after assessments; precision and reviewer usefulness ablation |
+| **P1.5 QUD dependency + PDTB/RST hybrid** | Даёт структуру reasoning и selection для ContextBundle | H | Competing discourse formalisms | P0.10 | Compare flat QUD vs anchor tree/graph; task-based retrieval/answer evidence |
+| **P1.6 Semantic actor graph** | Делает R/A operationally useful for ownership/review/dependencies | M/H | Co-occurrence promotion, stale roles | Authority/temporal gates | Edge P/R/F1 by predicate; all role/authority edges valid-time scoped |
+| **P1.7 Russian calibration expansion** | Снижает bilingual performance gap | H | Small gold, genre mismatch | 42-RU benchmark, NEREL/FrameBank/RST | Native-RU error reductions; ≤10 pp RU–EN gap or documented exceptions |
+| **P1.8 Family-specific confidence calibration and abstention** | Позволяет risk-based projection | M | Dataset shift | Sufficient gold per family | Reliability curves/ECE, precision-at-coverage, monitored drift |
+| **P1.9 Provenance-aware graph retrieval** | ContextBundle получает typed neighborhoods, conflicts and history | M | Popular-node bias, leakage | Accepted graph + access controls | Retrieval relevance, provenance coverage and contradiction recall vs embedding baseline |
+
+## P2 — advanced research
+
+| Work item | Value | Cost | Risk | Dependency | Expected evidence / exit criterion |
+|---|---|---:|---|---|---|
+| **P2.1 Implicit causal/common-sense inference** | Выше recall для sparse reports/conversations | H | Самый высокий hallucination risk | Mature explicit causal layer + large gold | Separate candidate channel; precision/coverage curves; no automatic O promotion until high-bar evidence |
+| **P2.2 Full AMR/UDS semantic substrate** | Более compositional semantics, negation, proto-properties | H | Mapping complexity, parser/domain drift | Stable core schema | Ablation proves relation/claim gains above SRL/OpenIE baseline |
+| **P2.3 Controlled ontology induction** | Находит новые domain concepts/relations | H | Ontology fragmentation/false merge | Registry governance + error data | Human acceptance rate, zero silent production class changes, migration plan |
+| **P2.4 Dynamic graph/GraphRAG/community summaries** | Global queries over long project history | H | Summary turns candidates into apparent facts | Provenance-aware accepted graph | Global QA/retrieval benefit with citation completeness and conflict preservation |
+| **P2.5 Revelation/recontextualization benchmark** | Формализует наиболее интересное зерно Sepia | H | Subjectivity, no mature gold | P1.4 pilots, NarraBench | Multi-annotator taxonomy, agreement, downstream ContextBundle benefit |
+| **P2.6 Active learning/human adjudication UI** | Снижает стоимость rare/high-impact relations | M/H | Reviewer bias and fatigue | Calibrated uncertainty | Error reduction per reviewed item, auditability, inter-reviewer agreement |
+| **P2.7 Russian temporal/QUD/discourse corpus release** | Закрывает выявленный research gap | H | Annotation cost/licensing | P1.5/P1.7 guidelines | Public/internal versioned corpus with baselines, agreement and documented genre scope |
+
+## K1. Первый implementation slice, который даст честный ответ
+
+Минимальная вертикаль должна обрабатывать один bilingual postmortem pack и один issue→PR pack:
+
+1. сохранить raw artifacts и thread/version metadata;
+2. построить stable blocks/spans;
+3. извлечь entities, event/state mentions, claims и speakers;
+4. построить event/observation/assertion/discourse clocks;
+5. принять explicit temporal relations;
+6. создать causal candidates, но принять только span+mechanism-backed;
+7. различить `cites`, `supports`, `contradicts`, `verifies`;
+8. извлечь один или несколько QUD на section/message в shadow mode;
+9. показать пользователю ContextBundle вместе с evidence spans, unknowns и competing claims;
+10. повторно запустить после нового evidence и проверить, что появляется `InterpretationRevision`, а E0/E1 не меняются.
+
+Если этот slice не проходит provenance/causal/false-promotion thresholds, расширять relation vocabulary преждевременно.
+
+## K2. Решения, которые можно зафиксировать уже сейчас
+
+- **Schema first, extractor second.** Issue #227 уже показывает цену обратного порядка.
+- **Candidate-first storage.** Extractor ничего не объявляет fact/authoritative сам.
+- **No single confidence.** Extraction, evidence, authority и temporal certainty независимы.
+- **Five clocks/positions where available.** Event/valid, observation, assertion, revelation/discourse, recorded.
+- **Causality is opt-in high-bar.** `before` никогда не повышается до `causes`.
+- **QUD/theme live in A, not O.** Они улучшают selection и interpretation, но не ontology truth.
+- **Mention graph is not actor graph.** Co-occurrence only generates candidates.
+- **Recontextualization is additive.** Новое evidence создаёт revision, не переписывает старое.
+- **Russian is a first-class benchmark language.** Не post-hoc translation.
+- **Fork Sepia: NO.** Harvest only evidence-labeled ideas.
+
+---
+
+# Итоговый ответ на главный вопрос
+
+Чтобы из текстового потока AIMETON получать не просто похожие chunks, а доказательно связанную и временно корректную сеть смысла, AMOS должен компилировать **не один граф утверждений, а связку provenance graph → candidate interpretation graph → gated semantic world graph → task-specific V/R/O/A projection**.
+
+Embeddings остаются полезны для retrieval и candidate generation, но не определяют identity, causality, ontology или truth. Каждое смысловое ребро должно отвечать на семь вопросов:
+
+1. **Что именно связано?** Typed subject/object и canonical predicate.
+2. **Где это сказано?** Immutable artifact и exact span/hash.
+3. **Кто это сказал/наблюдал?** Source, speaker, method и authority scope.
+4. **Это сказано явно или выведено?** Explicitness/derivation.
+5. **Когда это произошло, наблюдалось, было заявлено, раскрыто и записано?** Separate clocks.
+6. **Насколько relation подтверждена?** Evidence, contradiction, verification и calibration — отдельно от model confidence.
+7. **Куда её можно допустить?** A candidate, O state, R authority, V scope или только quarantine.
+
+Sepia помогает заметить четыре недооценённых вопроса — **какой implicit QUD решает block, чем event order отличается от disclosure order, что позднее evidence recontextualizes и где текст маскирует mere adjacency как causal chain**. Но ответы на эти вопросы AMOS должен строить заново, опираясь на MAVEN-ERE/TimeML/Allen/OWL-Time/CaTeRS/PDTB/RST/QUD parsing/FactBank/PROV/NEREL/FrameBank и собственный bilingual benchmark.
+
+Итоговая формула решения:
+
+```text
+Sepia ideas
+  + mature semantic/event/discourse formalisms
+  + structured LLM candidate generation
+  + immutable span provenance
+  + multi-clock temporal constraints
+  + conservative causal/evidence/authority gates
+  + bilingual AMOS benchmark
+  = AMOS Semantic Relation Layer v0.1 candidate
+```
+
+**Рекомендация:** начинать P0 без форка Sepia; считать успешным не объём графа, а низкую долю ложных причин, ложных ontology promotions и непровенансированных relations при достаточном coverage.
+
+---
+
+## Краткая библиография первичных опор
+
+- Banarescu et al. [Abstract Meaning Representation](https://aclanthology.org/W13-2322/), 2013.
+- Palmer, Gildea, Kingsbury. [The Proposition Bank](https://aclanthology.org/J05-1004/), 2005.
+- Bank of English FrameNet: [FrameNet book chapter](https://my.eng.utah.edu/~cs6961/papers/FrameNet_book.pdf).
+- White et al. [Universal Decompositional Semantics](https://aclanthology.org/2020.lrec-1.699.pdf), 2020.
+- Banko et al. [Open Information Extraction / TextRunner](https://aclanthology.org/N07-4013/), 2007.
+- Pustejovsky et al. [TimeML](https://aaai.org/papers/0005-ss03-07-005-timeml-robust-specification-of-event-and-temporal-expressions-in-text/), 2003.
+- Allen. [Maintaining Knowledge about Temporal Intervals](https://cse.unl.edu/~choueiry/Documents/Allen-CACM1983.pdf), 1983.
+- Ning et al. [MATRES](https://aclanthology.org/P18-1122/), 2018.
+- Mostafazadeh et al. [CaTeRS](https://aclanthology.org/W16-1007.pdf), 2016.
+- Wang et al. [MAVEN-ERE](https://aclanthology.org/2022.emnlp-main.60/), 2022.
+- Prasad et al. [PDTB 3 Annotation Manual](https://catalog.ldc.upenn.edu/docs/LDC2019T05/PDTB3-Annotation-Manual.pdf).
+- Carlson, Marcu, Okurowski. [RST Discourse Treebank](https://aclanthology.org/W01-1605.pdf), 2001.
+- Suvarna et al. [QUDSELECT](https://aclanthology.org/2024.emnlp-main.76/), 2024.
+- Namuduri et al. [QUDsim](https://arxiv.org/pdf/2504.09373), COLM 2025.
+- Saurí, Pustejovsky. [FactBank](https://doi.org/10.1007/s10579-009-9089-9), 2009.
+- Thorne et al. [FEVER](https://aclanthology.org/N18-1074/), 2018.
+- Wadden et al. [SciFact](https://aclanthology.org/2020.emnlp-main.609/), 2020.
+- W3C. [PROV-O](https://www.w3.org/TR/prov-o/), [OWL-Time](https://www.w3.org/TR/owl-time/), [SHACL](https://www.w3.org/TR/shacl/).
+- Loukachevitch et al. [NEREL](https://aclanthology.org/2021.ranlp-1.100/), 2021.
+- Russian [FrameBank](https://github.com/olesar/framebank) и [описание](https://ruslang.ru/doc/kashkin/2015/06.pdf).
+- Russell et al. [StoryScope](https://arxiv.org/abs/2604.03136v6), 2026.
+- Hamilton, Wilkens, Piper. [NarraBench](https://aclanthology.org/2026.eacl-long.176/), 2026.
+- Nonaka, Perry. [Character social network analysis](https://arxiv.org/html/2510.18932v1), 2025.
