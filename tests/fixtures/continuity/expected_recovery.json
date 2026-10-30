@@ -1,0 +1,9 @@
+{
+  "mission_id": "AMOS-MVP-0001",
+  "status": "ACTIVE",
+  "next_action_id": "repair_manifest_repository_identity",
+  "next_after_next_action_id": "repair_contract_assertions",
+  "exact_references": [
+    "ev-repo-current"
+  ]
+}
