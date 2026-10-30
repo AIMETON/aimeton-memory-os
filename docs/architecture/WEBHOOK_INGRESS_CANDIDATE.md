@@ -10,7 +10,7 @@ read-only, with a five-minute fallback interval.
 - `src/aimeton_memory_os/webhook_inbox.py`: stdlib SHA-256 HMAC validation,
   strict repository/event allowlist and SQLite WAL deduplicated receipts.
 - `scripts/receive_github_webhook.py`: local-loopback-only HTTP interface,
-  path `/hooks/amos/github`, size bound 256 KiB, accepted signed deliveries
+  path `/hooks/amos/github`, private Unix-socket transport (no exposed TCP listener), size bound 256 KiB, accepted signed deliveries
   reply 202 only after the SQLite commit and a wake-file append.
 - `tests/test_webhook_inbox.py`: bad signature/tampering, wrong repository or
   event, malformed signed payload, duplicate, exact-claim ACK and durable restart checks.
@@ -26,7 +26,7 @@ No webhook result directly grants action authorization.
 1. Protect a unique 32-byte-or-longer shared secret on the main server; configure
    the GitHub webhook source with the same secret using approved admin access.
    No secret values in a repository, chat, CI logs or telemetry.
-2. Add a verified HTTPS edge route to the loopback receiver on the canonical
+2. Add a verified HTTPS edge route to the private Unix-socket receiver on the canonical
    Caddy deployment, preserving the current public-site routing.
 3. Add a guarded systemd unit and path activation tied to durable wake events,
    followed by a bounded GitHub GET-only collector cycle. The product now

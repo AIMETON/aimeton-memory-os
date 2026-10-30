@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import argparse
+import os
 import sys
+from socketserver import ThreadingMixIn, UnixStreamServer
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -54,23 +56,40 @@ def handler_factory(database: Path, wake_file: Path, key: bytes):
     return Handler
 
 
+class ThreadingUnixHTTPServer(ThreadingMixIn, UnixStreamServer):
+    daemon_threads = True
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--listen", default="127.0.0.1")
+    parser.add_argument("--unix-socket", help="Unix-domain socket for local Caddy proxy")
     parser.add_argument("--port", type=int, default=8769)
     parser.add_argument("--key-file", required=True)
     parser.add_argument("--db", required=True)
     parser.add_argument("--wake-file", required=True)
     args = parser.parse_args()
     # Deny public bind; use an authenticated HTTPS reverse proxy.
-    if args.listen not in ("127.0.0.1", "::1"):
+    if not args.unix_socket and args.listen not in ("127.0.0.1", "::1"):
         parser.error("receiver must bind to loopback")
     key = Path(args.key_file).read_bytes().strip()
     if len(key) < 32:
         parser.error("shared key must have at least 32 bytes")
-    server = ThreadingHTTPServer((args.listen, args.port), handler_factory(
-        Path(args.db), Path(args.wake_file), key
-    ))
+    handler = handler_factory(Path(args.db), Path(args.wake_file), key)
+    if args.unix_socket:
+        socket_path = Path(args.unix_socket)
+        if not socket_path.is_absolute():
+            parser.error("Unix socket path must be absolute")
+        socket_path.parent.mkdir(parents=True, exist_ok=True)
+        if socket_path.is_socket():
+            socket_path.unlink()
+        previous_umask = os.umask(0o007)
+        try:
+            server = ThreadingUnixHTTPServer(str(socket_path), handler)
+        finally:
+            os.umask(previous_umask)
+    else:
+        server = ThreadingHTTPServer((args.listen, args.port), handler)
     server.serve_forever()
     return 0
 
