@@ -24,6 +24,19 @@ raw evidence → projections → compatibility checks → ContextBundle → perm
 
 OpenRAG is an optional document/retrieval edge. It is not the source of truth, policy engine, or final ContextBundle builder.
 
+## MVP-0 Continuity Kernel
+
+Version 0.1.0 introduces the first executable AMOS vertical slice for cognitive continuity:
+
+- canonical mission state and immutable evidence references;
+- deterministic CR-01…CR-06 evaluation;
+- derived ContextBundle compilation;
+- duplicate-mutation prevention;
+- source-version/snapshot drift blocking;
+- fresh-process recovery without raw chat history.
+
+The canonical fixture is deliberately small and uses a real AIMETON repository-identity drift incident. Passing it proves only the bounded continuity mechanism; it does not prove the broader AMOS hypothesis or F1 effectiveness.
+
 ## Repository layout
 
 - docs/architecture — contracts and architecture decisions
@@ -46,7 +59,7 @@ The baseline workflow materializes an exact commit SHA with Git directly, requir
 
 ## Status
 
-Pre-code MVP foundation. Architectural claims are hypotheses to be evaluated by the preregistered ablation protocol.
+**MVP-0 Continuity Kernel under acceptance.** Architectural claims remain hypotheses until preregistered ablation. The immediate P0 is Issue #6: prove restart/model-substitution mission recovery from canonical AMOS state.
 
 ## License and trademarks
 
