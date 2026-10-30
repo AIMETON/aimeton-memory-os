@@ -37,6 +37,20 @@ Version 0.1.0 introduces the first executable AMOS vertical slice for cognitive 
 
 The canonical fixture is deliberately small and uses a real AIMETON repository-identity drift incident. Passing it proves only the bounded continuity mechanism; it does not prove the broader AMOS hypothesis or F1 effectiveness.
 
+## MVP-1 Shadow Living Development Corpus
+
+Version 0.2.0 adds the first Life-and-Activity Learning execution path over a real AIMETON GitHub lifecycle:
+
+- source-grounded GitHub lifecycle receipts are wrapped as immutable E0 Evidence Envelopes;
+- the append-only log refuses destructive replacement under an existing evidence ID;
+- bounded E1 observations, E2 claims, E3 decisions and E4 derived knowledge preserve provenance;
+- the same evidence is projected into V/R/O/A and evaluated through CR-01…CR-06;
+- the resulting ContextBundle is explicitly `SHADOW` and forbids GitHub/production mutation;
+- event-sourced replay distinguishes historical `open` state from later `closed` state without rewriting earlier evidence;
+- the trace records snapshot identity, evidence digests and CR reason codes.
+
+The first real fixture is the lifecycle of Issue #6, whose accepted P0 decision was followed by a GitHub `closed` event. This is development/dogfooding evidence, not an unseen F1 benchmark.
+
 ## Repository layout
 
 - docs/architecture — contracts and architecture decisions
@@ -59,7 +73,7 @@ The baseline workflow materializes an exact commit SHA with Git directly, requir
 
 ## Status
 
-**MVP-0 Continuity Kernel under acceptance.** Architectural claims remain hypotheses until preregistered ablation. The immediate P0 is Issue #6: prove restart/model-substitution mission recovery from canonical AMOS state.
+**MVP-1 Shadow LDC under acceptance.** MVP-0 Continuity Kernel is accepted. The immediate P0 is Issue #4: prove real AIMETON development-stream ingestion/replay in Shadow mode. Architectural effectiveness claims remain hypotheses until frozen holdout and preregistered F1.
 
 ## License and trademarks
 

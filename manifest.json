@@ -4,7 +4,7 @@
   "product": "AIMETON Cognitive Operations Complex",
   "namespace": "AIMETON.COGOPS",
   "license": "Apache-2.0",
-  "status": "mvp0-continuity-kernel",
+  "status": "mvp1-shadow-ldc",
   "authoritative_interfaces": [
     "evidence",
     "descriptor",
@@ -12,6 +12,7 @@
     "context_bundle",
     "compatibility_registry",
     "verification_trace",
-    "cognitive_continuity"
+    "cognitive_continuity",
+    "living_development_corpus"
   ]
 }

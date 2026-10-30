@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AMOS E0 Evidence Envelope v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "evidence_id","layer","source_type","source_ref","source_object_id",
+    "observed_at","digest","payload"
+  ],
+  "properties": {
+    "evidence_id": {"type":"string","minLength":1},
+    "layer": {"const":"E0"},
+    "source_type": {"type":"string","minLength":1},
+    "source_ref": {"type":"string","minLength":1},
+    "source_object_id": {"type":"string","minLength":1},
+    "observed_at": {"type":"string","format":"date-time"},
+    "digest": {"type":"string","pattern":"^[0-9a-f]{64}$"},
+    "payload": {"type":"object"}
+  }
+}

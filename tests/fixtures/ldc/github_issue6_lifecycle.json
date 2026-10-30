@@ -1,0 +1,33 @@
+{
+  "opened_event": {
+    "issue_id": 5272929709,
+    "node_id": "I_kwDOUDYaG88AAAABOkqFrQ",
+    "number": 6,
+    "repository": "AIMETON/aimeton-memory-os",
+    "source_ref": "https://api.github.com/repos/AIMETON/aimeton-memory-os/issues/6",
+    "html_url": "https://github.com/AIMETON/aimeton-memory-os/issues/6",
+    "event": "opened",
+    "title": "P0: prove persistent mission recovery via AMOS ContextBundle",
+    "actor": "Dimar4713",
+    "created_at": "2026-08-27T23:05:43Z"
+  },
+  "decision_comment": {
+    "id": 6524862947,
+    "node_id": "IC_kwDOUDYaG88AAAABhOmB4w",
+    "url": "https://api.github.com/repos/AIMETON/aimeton-memory-os/issues/comments/6524862947",
+    "html_url": "https://github.com/AIMETON/aimeton-memory-os/issues/6#issuecomment-6524862947",
+    "author": "Dimar4713",
+    "author_association": "MEMBER",
+    "created_at": "2026-10-30T14:11:05Z",
+    "updated_at": "2026-10-30T14:11:05Z",
+    "body": "P0 accepted on 2026-10-30.\n\nEvidence: implementation PR #16 and exact-SHA CI passed. Critical path moves to #4 Shadow LDC."
+  },
+  "closed_event": {
+    "id": 34698426892,
+    "node_id": "CE_lADOUDYaG88AAAABOkqFrc8AAAAIFC_6DA",
+    "url": "https://api.github.com/repos/AIMETON/aimeton-memory-os/issues/events/34698426892",
+    "event": "closed",
+    "actor": "Dimar4713",
+    "created_at": "2026-10-30T14:11:08Z"
+  }
+}
