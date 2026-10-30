@@ -1,7 +1,8 @@
 # Cognitive Continuity Contract (CCC)
 
-**Status:** architecture seed / implementation target  
+**Status:** MVP-0 implementation contract  
 **Date:** 2026-09-04  
+**Implementation started:** 2026-10-30  
 **Parent:** AIMETON Cognitive Continuity research in `aimeton-architecture`
 
 ## Purpose
@@ -74,6 +75,18 @@ A recovered actor may re-enter ACTIVE mutation state only after:
 - authority and safety gates re-evaluated;
 - NEXT_SAFE_ACTION derived from current evidence.
 
+## MVP-0 executable mapping
+
+The first implementation is intentionally dependency-free and bounded:
+
+- `schemas/amos-continuity-state.v0.1.schema.json` — machine-readable mission-state contract;
+- `src/aimeton_memory_os/continuity.py` — deterministic state/evidence validation, CR-01…CR-06 evaluation and ContextBundle compilation;
+- `scripts/recover_context.py` — fresh-process reconstruction entry point;
+- `tests/fixtures/continuity/` — canonical recovery evidence/state/expected result;
+- `tests/test_continuity_kernel.py` — admit, duplicate-mutation and CR-06 drift assertions.
+
+This mapping is not a full persistence layer. JSON fixtures stand in for canonical durable storage so that recovery semantics can be proven before a storage substrate is selected.
+
 ## External evidence history
 
 The initial CCC seed was reinforced by Anthropic's Claude Fable 5.1 prompting guidance captured on 2026-09-04:
@@ -83,12 +96,4 @@ Vendor-specific Claude mechanics are not part of the contract. Only the vendor-n
 
 ## Next implementation slice
 
-Create a versioned machine-readable CCC schema and deterministic validator, then add golden tests for:
-
-- lost decision;
-- lost rejected-path rationale;
-- stale state promoted over current state;
-- missing exact PR/SHA/run reference;
-- missing blocker reason;
-- missing next safe action;
-- successful replay from immutable evidence.
+After MVP-0 acceptance, move the same contracts onto the AMOS Living Development Corpus Shadow path and prove replay against a real source state transition without changing the compatibility semantics.
