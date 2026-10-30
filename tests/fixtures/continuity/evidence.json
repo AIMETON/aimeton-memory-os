@@ -1,0 +1,14 @@
+[
+  {
+    "evidence_id": "ev-repo-current",
+    "source_type": "github.repository",
+    "source_ref": "github:AIMETON/aimeton-memory-os#1345722907",
+    "observed_at": "2026-10-30T13:00:00Z",
+    "digest": "6be0d2405aef7ca1b6d6ab727dc040f3c237afd0712b68c660bcf5aaa3dc1077",
+    "payload": {
+      "repository": "AIMETON/aimeton-memory-os",
+      "repository_id": 1345722907,
+      "owner": "AIMETON"
+    }
+  }
+]
