@@ -33,7 +33,7 @@ def validate(headers, body, shared_key):
         action = payload["action"]
     except (ValueError, TypeError, KeyError) as exc:
         raise InvalidWebhook("invalid payload") from exc
-    if not isinstance(action, str) or event not in ALLOWED.get(repo, set()):
+    if not isinstance(repo, str) or not isinstance(action, str) or event not in ALLOWED.get(repo, set()):
         raise InvalidWebhook("unsupported source")
     return delivery.lower(), repo, event
 
