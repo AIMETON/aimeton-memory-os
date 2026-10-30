@@ -382,7 +382,7 @@ def process_shadow_store(
             if (
                 previous.get("schema_version") == 1
                 and previous.get("signature") == list(before_signature)
-                and previous.get("traces") == sum(1 for _ in root.glob("*.json"))
+                and previous.get("traces") == sum(1 for path in root.glob("*.json") if path.name != checkpoint.name)
             ):
                 return {
                     "schema_version": "1.0",
