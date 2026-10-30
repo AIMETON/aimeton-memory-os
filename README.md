@@ -64,6 +64,19 @@ Version 0.3.0 adds resumable continuous intake for selected AIMETON GitHub repos
 
 This collector remains Shadow-only. Scheduling and persistent placement must follow AIMETON infrastructure contracts rather than repository-local ad hoc deployment.
 
+## MVP-2 Post-persistence Shadow Processing
+
+Version 0.4.0 completes the processing half of the continuous Shadow path:
+
+- the processor opens the durable E0 SQLite store in read-only mode;
+- every persisted evidence record gets a deterministic E1 observation, bounded V/R/O/A projection, CR-01…CR-06 evaluation and immutable Shadow trace;
+- source comments may create E2 source-assertion candidates, never truth by frequency or similarity;
+- source-grounded decision patterns can create E3 decisions and E4 derived knowledge only with preserved E0 lineage;
+- trace files are immutable/idempotent: a replay either matches byte-for-byte or fails closed;
+- processor runs never change E0 evidence count and perform no GitHub/provider mutations.
+
+The initial live decision-lineage target is the already persisted Issue #6 acceptance comment followed by its closed event. The post-start Issue #20 marker is the live per-evidence trace acceptance target.
+
 ## Repository layout
 
 - docs/architecture — contracts and architecture decisions
@@ -86,7 +99,7 @@ The baseline workflow materializes an exact commit SHA with Git directly, requir
 
 ## Status
 
-**MVP-2 read-only Shadow collector under acceptance.** MVP-0 Continuity Kernel and MVP-1 Shadow LDC are accepted. The immediate P0 is Issue #20: prove resumable live GitHub collection, exactly-once E0 intake for a newly occurring event, and correct infrastructure placement. Architectural effectiveness claims remain hypotheses until frozen holdout and preregistered F1.
+**MVP-2 continuous Shadow path under acceptance.** Live E0 collection/placement is accepted; the remaining Issue #20 gate is live post-persistence E1/E2/E3/E4 → V/R/O/A → CR-01…CR-06 → immutable ContextBundle/trace processing. Architectural effectiveness claims remain hypotheses until frozen holdout and preregistered F1.
 
 ## License and trademarks
 
