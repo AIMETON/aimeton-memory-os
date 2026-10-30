@@ -55,7 +55,7 @@ def validate_repository_contracts() -> list[str]:
         ROOT / "schemas" / "amos-continuity-state.v0.1.schema.json"
     ]
     evidence_schema = payloads[
-        ROOT / "schemas" / "amos-evidence-envelope.v0.1.schema.json"
+        ROOT / "schemas" / "amos-evidence-envelope.v0.2.schema.json"
     ]
     pyproject = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
 
@@ -71,7 +71,7 @@ def validate_repository_contracts() -> list[str]:
         (versions.get("compatibility_contract") == "v0.3", "compatibility contract drifted"),
         (versions.get("coordination_snapshot_schema") == "v0.2", "coordination snapshot version drifted"),
         (versions.get("continuity_state_schema") == "v0.1", "continuity schema version drifted"),
-        (versions.get("evidence_envelope_schema") == "v0.1", "evidence envelope schema version drifted"),
+        (versions.get("evidence_envelope_schema") == "v0.2", "evidence envelope schema version drifted"),
         (pyproject.get("project", {}).get("name") == "aimeton-memory-os", "pyproject project.name drifted"),
         (pyproject.get("project", {}).get("requires-python") == ">=3.12", "Python floor must remain >=3.12"),
         (pyproject.get("project", {}).get("license", {}).get("text") == "Apache-2.0", "pyproject license drifted"),
@@ -85,8 +85,10 @@ def validate_repository_contracts() -> list[str]:
         ({"mission_id","next_safe_action","next_after_next","authority_envelope","exact_references","snapshot_id"} <= set(continuity_schema.get("required") or []), "continuity required fields incomplete"),
         (evidence_schema.get("$schema") == "https://json-schema.org/draft/2020-12/schema", "evidence envelope schema draft drifted"),
         (evidence_schema.get("additionalProperties") is False, "evidence envelope must fail closed"),
-        ({"evidence_id","layer","source_type","source_ref","source_object_id","observed_at","digest","payload"} <= set(evidence_schema.get("required") or []), "evidence envelope required fields incomplete"),
+        ({"evidence_id","layer","partition","source_type","source_ref","source_object_id","observed_at","digest","payload"} <= set(evidence_schema.get("required") or []), "evidence envelope required fields incomplete"),
         (evidence_schema.get("properties", {}).get("layer", {}).get("const") == "E0", "evidence envelope must be E0"),
+        (set(evidence_schema.get("properties", {}).get("partition", {}).get("enum") or []) == {"development","holdout_candidate","frozen_holdout"}, "evidence partition registry drifted"),
+        ("shadow_collector" in (manifest.get("authoritative_interfaces") or []), "shadow collector interface missing"),
     ]
     for condition, message in checks:
         try:

@@ -21,10 +21,12 @@ def _dt(value: str) -> datetime:
 def make_evidence_envelope(
     *, evidence_id: str, source_type: str, source_ref: str,
     observed_at: str, payload: dict[str, Any], source_object_id: str,
+    partition: str = "development",
 ) -> dict[str, Any]:
     return {
         "evidence_id": evidence_id,
         "layer": "E0",
+        "partition": partition,
         "source_type": source_type,
         "source_ref": source_ref,
         "source_object_id": source_object_id,
