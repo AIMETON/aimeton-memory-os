@@ -44,11 +44,11 @@ class WebhookInboxTests(unittest.TestCase):
             thread.start()
             def invoke(headers, body):
                 request = (
-                    "POST /hooks/amos/github HTTP/1.1\\r\\n"
-                    "Host: localhost\\r\\n"
-                    f"Content-Length: {len(body)}\\r\\n"
-                    + "".join(f"{name}: {value}\\r\\n" for name, value in headers.items())
-                    + "Connection: close\\r\\n\\r\\n"
+                    "POST /hooks/amos/github HTTP/1.1\r\n"
+                    "Host: localhost\r\n"
+                    f"Content-Length: {len(body)}\r\n"
+                    + "".join(f"{name}: {value}\r\n" for name, value in headers.items())
+                    + "Connection: close\r\n\r\n"
                 ).encode() + body
                 client = socket.socket(socket.AF_UNIX)
                 client.settimeout(2)
@@ -61,7 +61,7 @@ class WebhookInboxTests(unittest.TestCase):
                         if not block:
                             break
                         response += block
-                    return response.split(b"\\r\\n", 1)[0]
+                    return response.split(b"\r\n", 1)[0]
                 finally:
                     client.close()
             try:
