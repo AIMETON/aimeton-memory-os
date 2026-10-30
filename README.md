@@ -112,7 +112,7 @@ The baseline workflow materializes an exact commit SHA with Git directly, requir
 
 ## Status
 
-**MVP-2 continuous Shadow path ACCEPTED for one AIMETON repository; MVP-3 multi-repository replication is a live-acceptance candidate.** The product code can ingest `AIMETON/Choke_ring_antenna` through versioned pull snapshots plus issue comments while preserving the accepted compatibility semantics and evaluation partitioning. Runtime acceptance still requires private-source deployment, independent cursors, exactly-once post-start evidence and immutable trace read-back. Architectural effectiveness claims remain hypotheses until frozen holdout and preregistered F1.
+**MVP-2 continuous Shadow path ACCEPTED for one AIMETON repository; MVP-3 multi-repository replication is a live-acceptance candidate.** The product code can ingest `AIMETON/Choke_ring_antenna` through complete versioned pull snapshots only; the partial Issues-comment view is intentionally excluded from the source contract while preserving the accepted compatibility semantics and evaluation partitioning. Runtime acceptance still requires private-source deployment, independent cursors, exactly-once post-start evidence and immutable trace read-back. Architectural effectiveness claims remain hypotheses until frozen holdout and preregistered F1.
 
 ## License and trademarks
 
