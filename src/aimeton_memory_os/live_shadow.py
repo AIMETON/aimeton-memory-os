@@ -10,10 +10,10 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import sqlite3
 from pathlib import Path
 from typing import Any, Iterable
 
-from .collector import SQLiteShadowStore
 from .continuity import compile_context_bundle
 
 
@@ -323,13 +323,40 @@ def _write_immutable(path: Path, payload: dict[str, Any]) -> bool:
     return True
 
 
-def process_shadow_store(db_path: str | Path, output_dir: str | Path) -> dict[str, Any]:
-    store = SQLiteShadowStore(db_path)
+def _read_envelopes_ro(db_path: str | Path) -> tuple[list[dict[str, Any]], int]:
+    uri = Path(db_path).resolve().as_uri() + "?mode=ro"
+    conn = sqlite3.connect(uri, uri=True)
     try:
-        envelopes = store.iter_envelopes()
-        evidence_count_before = store.count()
+        rows = conn.execute(
+            """
+            SELECT evidence_id,digest,partition_name,source_type,source_ref,
+                   source_object_id,observed_at,payload_json
+            FROM evidence
+            ORDER BY observed_at, source_object_id
+            """
+        ).fetchall()
+        count = int(conn.execute("SELECT COUNT(*) FROM evidence").fetchone()[0])
     finally:
-        store.close()
+        conn.close()
+    envelopes = [
+        {
+            "evidence_id": row[0],
+            "layer": "E0",
+            "digest": row[1],
+            "partition": row[2],
+            "source_type": row[3],
+            "source_ref": row[4],
+            "source_object_id": row[5],
+            "observed_at": row[6],
+            "payload": json.loads(row[7]),
+        }
+        for row in rows
+    ]
+    return envelopes, count
+
+
+def process_shadow_store(db_path: str | Path, output_dir: str | Path) -> dict[str, Any]:
+    envelopes, evidence_count_before = _read_envelopes_ro(db_path)
 
     root = Path(output_dir)
     created = 0
@@ -355,11 +382,7 @@ def process_shadow_store(db_path: str | Path, output_dir: str | Path) -> dict[st
             existing += 1
         chain_traces += 1
 
-    verify = SQLiteShadowStore(db_path)
-    try:
-        evidence_count_after = verify.count()
-    finally:
-        verify.close()
+    _, evidence_count_after = _read_envelopes_ro(db_path)
     if evidence_count_after != evidence_count_before:
         raise RuntimeError("post-persistence processor changed E0 evidence count")
 
