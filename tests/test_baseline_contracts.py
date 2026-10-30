@@ -22,11 +22,12 @@ class AmosBaselineContractsTest(unittest.TestCase):
 
     def test_manifest_declares_governed_amos_identity(self) -> None:
         manifest = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))
-        self.assertEqual(manifest["repository"], "Dimar4713/aimeton-memory-os")
+        self.assertEqual(manifest["repository"], "AIMETON/aimeton-memory-os")
         self.assertEqual(manifest["namespace"], "AIMETON.COGOPS")
         self.assertEqual(manifest["license"], "Apache-2.0")
         self.assertIn("compatibility_registry", manifest["authoritative_interfaces"])
         self.assertIn("verification_trace", manifest["authoritative_interfaces"])
+        self.assertIn("cognitive_continuity", manifest["authoritative_interfaces"])
 
     def test_baseline_ci_is_self_hosted_and_marketplace_free(self) -> None:
         workflow = (ROOT / ".github" / "workflows" / "baseline-ci.yml").read_text(encoding="utf-8")
