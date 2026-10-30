@@ -53,3 +53,52 @@ def insert_receipt(database, receipt):
         return cur.rowcount == 1
     finally:
         conn.close()
+
+
+def begin_batch(database):
+    """Reserve existing delivery IDs before source collection; reclaim after crash.
+
+    Worker must be exclusive (the existing systemd oneshot provides that).
+    New incoming receipts remain pending and are never acknowledged by this batch.
+    """
+    conn = sqlite3.connect(database, timeout=10)
+    try:
+        with conn:
+            conn.execute("UPDATE deliveries SET status='pending' WHERE status='processing'")
+            ids = [row[0] for row in conn.execute(
+                "SELECT id FROM deliveries WHERE status='pending' ORDER BY rowid"
+            ).fetchall()]
+            conn.executemany(
+                "UPDATE deliveries SET status='processing' WHERE id=? AND status='pending'",
+                [(item,) for item in ids],
+            )
+            return ids
+    finally:
+        conn.close()
+
+
+def finish_batch(database, ids, *, success):
+    """Acknowledge only the IDs claimed before GET/derivation started."""
+    if not ids:
+        return 0
+    conn = sqlite3.connect(database, timeout=10)
+    try:
+        with conn:
+            target = "processed" if success else "pending"
+            result = conn.executemany(
+                "UPDATE deliveries SET status=? WHERE id=? AND status='processing'",
+                [(target, item) for item in ids],
+            )
+            return result.rowcount
+    finally:
+        conn.close()
+
+
+def pending_count(database):
+    conn = sqlite3.connect(database, timeout=10)
+    try:
+        return int(conn.execute(
+            "SELECT COUNT(*) FROM deliveries WHERE status='pending'"
+        ).fetchone()[0])
+    finally:
+        conn.close()
