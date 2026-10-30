@@ -1,10 +1,10 @@
 {
   "repository": "aimeton-memory-os",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "architecture_baseline": "AMOS external audit package v0.3",
   "compatibility_contract": "v0.3",
   "coordination_snapshot_schema": "v0.2",
   "continuity_state_schema": "v0.1",
   "evidence_envelope_schema": "v0.2",
-  "status": "mvp2-read-only-shadow-collector"
+  "status": "mvp2-live-shadow-processing"
 }

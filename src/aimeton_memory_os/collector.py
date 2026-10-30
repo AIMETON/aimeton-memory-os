@@ -93,6 +93,30 @@ class SQLiteShadowStore:
             "SELECT evidence_id FROM evidence ORDER BY observed_at, source_object_id"
         ).fetchall()]
 
+    def iter_envelopes(self) -> list[dict[str, Any]]:
+        rows = self.db.execute(
+            """
+            SELECT evidence_id,digest,partition_name,source_type,source_ref,
+                   source_object_id,observed_at,payload_json
+            FROM evidence
+            ORDER BY observed_at, source_object_id
+            """
+        ).fetchall()
+        return [
+            {
+                "evidence_id": row[0],
+                "layer": "E0",
+                "digest": row[1],
+                "partition": row[2],
+                "source_type": row[3],
+                "source_ref": row[4],
+                "source_object_id": row[5],
+                "observed_at": row[6],
+                "payload": json.loads(row[7]),
+            }
+            for row in rows
+        ]
+
     def get_cursor(self, stream_key: str) -> Cursor | None:
         row = self.db.execute(
             "SELECT observed_at, object_id FROM cursors WHERE stream_key = ?",
