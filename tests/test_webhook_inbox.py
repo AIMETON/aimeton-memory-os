@@ -4,6 +4,8 @@ import hashlib
 import hmac
 import json
 import sqlite3
+import socket
+import threading
 import sys
 import tempfile
 import unittest
@@ -11,8 +13,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
+sys.path.insert(0, str(ROOT / "scripts"))
 
 from aimeton_memory_os.webhook_inbox import InvalidWebhook, insert_receipt, validate, begin_batch, finish_batch, pending_count
+from receive_github_webhook import ThreadingUnixHTTPServer, handler_factory
 
 KEY = b"x" * 40
 DELIVERY = "8d9cdf8b-aaaa-4c1e-9f8b-333333333333"
@@ -29,6 +33,49 @@ def signed(repo="AIMETON/Choke_ring_antenna", kind="pull_request", action="synch
 
 
 class WebhookInboxTests(unittest.TestCase):
+    def test_unix_socket_receiver_accepts_valid_hmac_and_rejects_forgery(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            server = ThreadingUnixHTTPServer(
+                str(root / "hook.sock"),
+                handler_factory(root / "inbox.db", root / "wake", KEY),
+            )
+            thread = threading.Thread(target=server.serve_forever, daemon=True)
+            thread.start()
+            def invoke(headers, body):
+                request = (
+                    "POST /hooks/amos/github HTTP/1.1\\r\\n"
+                    "Host: localhost\\r\\n"
+                    f"Content-Length: {len(body)}\\r\\n"
+                    + "".join(f"{name}: {value}\\r\\n" for name, value in headers.items())
+                    + "Connection: close\\r\\n\\r\\n"
+                ).encode() + body
+                client = socket.socket(socket.AF_UNIX)
+                client.settimeout(2)
+                try:
+                    client.connect(str(root / "hook.sock"))
+                    client.sendall(request)
+                    response = b""
+                    while True:
+                        block = client.recv(4096)
+                        if not block:
+                            break
+                        response += block
+                    return response.split(b"\\r\\n", 1)[0]
+                finally:
+                    client.close()
+            try:
+                headers, payload = signed()
+                self.assertIn(b"202", invoke(headers, payload))
+                self.assertIn(b"202", invoke(headers, payload))
+                self.assertTrue((root / "wake").is_file())
+                self.assertIn(b"403", invoke({**headers, "X-Hub-Signature-256": "bad"}, payload))
+                self.assertEqual(sqlite3.connect(root / "inbox.db").execute("SELECT COUNT(*) FROM deliveries").fetchone()[0], 1)
+            finally:
+                server.shutdown()
+                server.server_close()
+                thread.join(timeout=2)
+
     def test_hmac_and_source_allowlist(self):
         headers, body = signed()
         self.assertEqual(validate(headers, body, KEY), (DELIVERY, "AIMETON/Choke_ring_antenna", "pull_request"))
