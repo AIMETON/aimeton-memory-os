@@ -357,10 +357,48 @@ def _read_envelopes_ro(db_path: str | Path) -> tuple[list[dict[str, Any]], int]:
     return envelopes, count
 
 
-def process_shadow_store(db_path: str | Path, output_dir: str | Path) -> dict[str, Any]:
-    envelopes, evidence_count_before = _read_envelopes_ro(db_path)
+def _store_signature(db_path: str | Path) -> tuple[int, int]:
+    """Cheap append-only E0 watermark; no E0 content is modified."""
+    uri = Path(db_path).resolve().as_uri() + "?mode=ro"
+    conn = sqlite3.connect(uri, uri=True)
+    try:
+        count, max_rowid = conn.execute(
+            "SELECT COUNT(*), COALESCE(MAX(rowid), 0) FROM evidence"
+        ).fetchone()
+        return int(count), int(max_rowid)
+    finally:
+        conn.close()
 
+
+def process_shadow_store(
+    db_path: str | Path, output_dir: str | Path, *, verify_all: bool = False
+) -> dict[str, Any]:
     root = Path(output_dir)
+    checkpoint = root / ".shadow-processor-checkpoint.json"
+    before_signature = _store_signature(db_path)
+    if not verify_all and checkpoint.is_file():
+        try:
+            previous = json.loads(checkpoint.read_text(encoding="utf-8"))
+            if (
+                previous.get("schema_version") == 1
+                and previous.get("signature") == list(before_signature)
+                and previous.get("traces") == sum(1 for _ in root.glob("*.json"))
+            ):
+                return {
+                    "schema_version": "1.0",
+                    "evidence_count": before_signature[0],
+                    "envelope_traces": previous["envelope_traces"],
+                    "decision_chain_traces": previous["decision_chain_traces"],
+                    "created": 0,
+                    "existing": previous["traces"],
+                    "idle_fast_path": True,
+                    "e0_mutation_performed": False,
+                    "source_mutation_performed": False,
+                }
+        except (ValueError, TypeError, KeyError, OSError):
+            # Invalid checkpoint is never authoritative; derive from E0.
+            pass
+    envelopes, evidence_count_before = _read_envelopes_ro(db_path)
     created = 0
     existing = 0
     envelope_traces = 0
@@ -384,12 +422,27 @@ def process_shadow_store(db_path: str | Path, output_dir: str | Path) -> dict[st
             existing += 1
         chain_traces += 1
 
-    _, evidence_count_after = _read_envelopes_ro(db_path)
-    if evidence_count_after != evidence_count_before:
-        raise RuntimeError("post-persistence processor changed E0 evidence count")
+    after_signature = _store_signature(db_path)
+    if after_signature != before_signature:
+        raise RuntimeError("E0 changed during Shadow derivation; retry on next cycle")
+
+    # Commit after every immutable trace succeeded. Crash before this write
+    # falls back to deterministic replay; no partial checkpoint is admitted.
+    state = {
+        "schema_version": 1,
+        "signature": list(after_signature),
+        "traces": envelope_traces + chain_traces,
+        "envelope_traces": envelope_traces,
+        "decision_chain_traces": chain_traces,
+    }
+    root.mkdir(parents=True, exist_ok=True)
+    staged = checkpoint.with_suffix(".tmp")
+    staged.write_text(json.dumps(state, sort_keys=True) + "\n", encoding="utf-8")
+    staged.replace(checkpoint)
 
     return {
         "schema_version": "1.0",
+        "idle_fast_path": False,
         "evidence_count": evidence_count_before,
         "envelope_traces": envelope_traces,
         "decision_chain_traces": chain_traces,
