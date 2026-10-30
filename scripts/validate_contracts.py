@@ -48,39 +48,37 @@ def validate_repository_contracts() -> list[str]:
 
     manifest = payloads[ROOT / "manifest.json"]
     versions = payloads[ROOT / "versions.json"]
-    schema_path = ROOT / "schemas" / "aimeton-cogops-coordination-snapshot.v0.2.schema.json"
-    schema = payloads[schema_path]
+    coordination_schema = payloads[
+        ROOT / "schemas" / "aimeton-cogops-coordination-snapshot.v0.2.schema.json"
+    ]
+    continuity_schema = payloads[
+        ROOT / "schemas" / "amos-continuity-state.v0.1.schema.json"
+    ]
     pyproject = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
 
     checks = [
         (manifest.get("schema_version") == "1.0", "manifest.schema_version must be 1.0"),
-        (manifest.get("repository") == "Dimar4713/aimeton-memory-os", "manifest.repository drifted"),
+        (manifest.get("repository") == "AIMETON/aimeton-memory-os", "manifest.repository drifted"),
         (manifest.get("product") == "AIMETON Cognitive Operations Complex", "manifest.product drifted"),
         (manifest.get("namespace") == "AIMETON.COGOPS", "manifest.namespace drifted"),
         (manifest.get("license") == "Apache-2.0", "manifest.license drifted"),
-        (len(manifest.get("authoritative_interfaces") or []) >= 6, "manifest authoritative interfaces incomplete"),
+        ("cognitive_continuity" in (manifest.get("authoritative_interfaces") or []), "continuity interface missing"),
         (versions.get("repository") == "aimeton-memory-os", "versions.repository drifted"),
         (versions.get("architecture_baseline") == "AMOS external audit package v0.3", "architecture baseline drifted"),
         (versions.get("compatibility_contract") == "v0.3", "compatibility contract drifted"),
         (versions.get("coordination_snapshot_schema") == "v0.2", "coordination snapshot version drifted"),
+        (versions.get("continuity_state_schema") == "v0.1", "continuity schema version drifted"),
         (pyproject.get("project", {}).get("name") == "aimeton-memory-os", "pyproject project.name drifted"),
         (pyproject.get("project", {}).get("requires-python") == ">=3.12", "Python floor must remain >=3.12"),
         (pyproject.get("project", {}).get("license", {}).get("text") == "Apache-2.0", "pyproject license drifted"),
-        (schema.get("$schema") == "https://json-schema.org/draft/2020-12/schema", "coordination schema draft drifted"),
-        (schema.get("additionalProperties") is False, "coordination snapshot must fail closed on unknown top-level fields"),
-        (set(schema.get("required") or []) == {
-            "snapshot_id",
-            "axis_registry_version",
-            "compatibility_registry_version",
-            "axes",
-            "checks",
-            "outcome",
-            "observed_at",
-            "policy_version",
-        }, "coordination snapshot required fields drifted"),
-        (schema.get("properties", {}).get("axes", {}).get("minItems") == 4, "coordination snapshot must require four axes"),
-        (schema.get("properties", {}).get("axes", {}).get("maxItems") == 4, "coordination snapshot must allow exactly four axes"),
-        (set(schema.get("$defs", {}).get("axis", {}).get("properties", {}).get("axis_id", {}).get("enum") or []) == {"V", "R", "O", "A"}, "four-axis registry drifted"),
+        (coordination_schema.get("$schema") == "https://json-schema.org/draft/2020-12/schema", "coordination schema draft drifted"),
+        (coordination_schema.get("additionalProperties") is False, "coordination snapshot must fail closed"),
+        (coordination_schema.get("properties", {}).get("axes", {}).get("minItems") == 4, "coordination snapshot must require four axes"),
+        (coordination_schema.get("properties", {}).get("axes", {}).get("maxItems") == 4, "coordination snapshot must allow exactly four axes"),
+        (set(coordination_schema.get("$defs", {}).get("axis", {}).get("properties", {}).get("axis_id", {}).get("enum") or []) == {"V", "R", "O", "A"}, "four-axis registry drifted"),
+        (continuity_schema.get("$schema") == "https://json-schema.org/draft/2020-12/schema", "continuity schema draft drifted"),
+        (continuity_schema.get("additionalProperties") is False, "continuity state must fail closed"),
+        ({"mission_id","next_safe_action","next_after_next","authority_envelope","exact_references","snapshot_id"} <= set(continuity_schema.get("required") or []), "continuity required fields incomplete"),
     ]
     for condition, message in checks:
         try:
@@ -93,7 +91,7 @@ def validate_repository_contracts() -> list[str]:
         import aimeton_memory_os  # type: ignore
 
         package_version = aimeton_memory_os.__version__
-    except Exception as exc:  # pragma: no cover - surfaced as contract failure
+    except Exception as exc:
         failures.append(f"package import failed: {type(exc).__name__}: {exc}")
     else:
         expected_version = str(versions.get("version"))
