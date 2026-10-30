@@ -1,0 +1,75 @@
+{
+  "mission_id": "AMOS-MVP-0001",
+  "objective": "Repair stale canonical repository identity and prove provider-neutral mission recovery",
+  "status": "ACTIVE",
+  "scope": "AIMETON/aimeton-memory-os",
+  "active_critical_path": "repository reality repair -> continuity kernel -> recovery verification",
+  "decisions": [
+    {
+      "decision_id": "D-1",
+      "text": "AIMETON/aimeton-memory-os is the current canonical repository identity",
+      "evidence_ref": "ev-repo-current"
+    }
+  ],
+  "constraints": [
+    "no production/provider mutation",
+    "no raw chat transcript as source of truth"
+  ],
+  "invariants": [
+    "immutable evidence outranks derived context",
+    "completed mutations must not be repeated"
+  ],
+  "attempted": [],
+  "rejected": [],
+  "failed": [],
+  "completed": [
+    {
+      "action_id": "detect_stale_repository_identity",
+      "result": "manifest and tests still referenced Dimar4713/aimeton-memory-os"
+    }
+  ],
+  "open": [
+    "repair manifest repository identity",
+    "repair repository contract assertions",
+    "run exact-SHA CI"
+  ],
+  "blockers": [],
+  "next_safe_action": {
+    "action_id": "repair_manifest_repository_identity",
+    "scope": "AIMETON/aimeton-memory-os",
+    "description": "Change canonical repository identity to AIMETON/aimeton-memory-os"
+  },
+  "next_after_next": {
+    "action_id": "repair_contract_assertions",
+    "scope": "AIMETON/aimeton-memory-os",
+    "description": "Update deterministic repository contract checks to the organization identity"
+  },
+  "authority_envelope": {
+    "allowed_actions": [
+      "repair_manifest_repository_identity",
+      "repair_contract_assertions",
+      "run_exact_sha_ci"
+    ],
+    "forbidden_actions": [
+      "production_mutation",
+      "provider_billing_change"
+    ]
+  },
+  "budget_envelope": {
+    "paid_llm_calls": 0,
+    "new_infrastructure_spend": 0
+  },
+  "exact_references": [
+    "ev-repo-current"
+  ],
+  "expected_evidence_digests": {
+    "ev-repo-current": "6be0d2405aef7ca1b6d6ab727dc040f3c237afd0712b68c660bcf5aaa3dc1077"
+  },
+  "snapshot_id": "amos:continuity:mvp0:0001",
+  "state_as_of": "2026-10-30T13:05:00Z",
+  "termination_criteria": [
+    "fresh process reconstructs the mission from canonical files only",
+    "duplicate mutation count remains zero",
+    "authority envelope is preserved"
+  ]
+}
