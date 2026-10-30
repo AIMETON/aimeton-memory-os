@@ -119,3 +119,22 @@ The baseline workflow materializes an exact commit SHA with Git directly, requir
 Apache-2.0. See LICENSE and NOTICE. AIMETON names and marks are governed separately by TRADEMARKS.md.
 
 SPDX-License-Identifier: Apache-2.0
+
+## Shadow idle-cycle efficiency (candidate)
+
+The Shadow processor uses an **append-only E0 watermark checkpoint** in the traces directory
+(`.shadow-processor-checkpoint.json`). When the E0 row count, max rowid and trace
+file count have not changed, the normal cycle performs only constant-size SQLite
+metadata reads plus a trace-file count; it skips JSON parsing, ContextBundle
+compilation and existing-trace replay. A new E0 receipt, a missing trace or
+a missing/invalid checkpoint forces deterministic reconstruction. The checkpoint
+is written atomically only after trace processing succeeds; it is not a source
+of truth. Run `python3 scripts/compile_live_shadow.py --db ... --output-dir ... --verify-all`
+for an explicit full integrity replay (the normal idle fast path does not validate
+each existing trace byte-for-byte). Running with `--verify-all` also detects
+immutable collision/tampering in existing traces.
+
+This is **compute optimisation**, not webhook delivery: the currently deployed
+one-minute GitHub polling timer continues unchanged until an independently
+verified event receiver, authenticated delivery, durable queue and reconciliation
+fallback are available. Do not reduce intake frequency before that deployment.
