@@ -99,7 +99,7 @@ The baseline workflow materializes an exact commit SHA with Git directly, requir
 
 ## Status
 
-**MVP-2 continuous Shadow path under acceptance.** Live E0 collection/placement is accepted; the remaining Issue #20 gate is live post-persistence E1/E2/E3/E4 → V/R/O/A → CR-01…CR-06 → immutable ContextBundle/trace processing. Architectural effectiveness claims remain hypotheses until frozen holdout and preregistered F1.
+**MVP-2 continuous Shadow path ACCEPTED for one AIMETON repository.** Live E0 collection, post-persistence E1/E2/E3/E4 derivation, V/R/O/A projection, CR-01…CR-06 admission and immutable Shadow traces are accepted on the persistent main-server runtime. The next critical path is replication on one active AIMETON application repository while preserving the same compatibility semantics and evaluation partitioning. Architectural effectiveness claims remain hypotheses until frozen holdout and preregistered F1.
 
 ## License and trademarks
 
