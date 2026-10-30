@@ -4,6 +4,7 @@ import json
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -107,6 +108,48 @@ class LiveShadowProcessorTest(unittest.TestCase):
             self.assertEqual([c["check_id"] for c in marker["compatibility"]], [f"CR-{n:02d}" for n in range(1, 7)])
             self.assertTrue(all(c["state"] == "satisfied" for c in marker["compatibility"]))
             self.assertIn("github_mutation", marker["authority_envelope"]["forbidden_actions"])
+
+    def test_idle_fast_path_skips_full_e0_scan_and_new_evidence_invalidates(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            db = root / "shadow.db"
+            traces = root / "traces"
+            self._seed(db)
+            first = process_shadow_store(db, traces)
+            self.assertEqual(first["created"], 4)
+            with patch("aimeton_memory_os.live_shadow._read_envelopes_ro",
+                       side_effect=AssertionError("idle must not scan E0")):
+                second = process_shadow_store(db, traces)
+            self.assertTrue(second["idle_fast_path"])
+            self.assertEqual(second["created"], 0)
+            store = SQLiteShadowStore(db)
+            payload = {
+                "id": 999999, "url": "https://api.github.com/repos/AIMETON/aimeton-memory-os/issues/comments/999999",
+                "issue_url": "https://api.github.com/repos/AIMETON/aimeton-memory-os/issues/25",
+                "body": "new source evidence",
+                "created_at": "2026-10-31T01:00:00Z",
+            }
+            store.append(make_evidence_envelope(
+                evidence_id="github:issue-comment:AIMETON/aimeton-memory-os:999999",
+                source_type="github.issue_comment",
+                source_ref=payload["url"],
+                source_object_id="999999",
+                observed_at=payload["created_at"],
+                payload=payload,
+                partition="development",
+            ))
+            store.close()
+            third = process_shadow_store(db, traces)
+            self.assertFalse(third["idle_fast_path"])
+            self.assertEqual(third["evidence_count"], 4)
+            self.assertEqual(third["created"], 1)
+            self.assertEqual(process_shadow_store(db, traces, verify_all=True)["created"], 0)
+            # Missing trace must invalidate idle checkpoint and be regenerated.
+            candidate = next(p for p in traces.glob("*.json") if '"source_evidence_id": "github:issue-comment:AIMETON/aimeton-memory-os:999999"' in p.read_text())
+            candidate.unlink()
+            rebuilt = process_shadow_store(db, traces)
+            self.assertEqual(rebuilt["created"], 1)
+            self.assertFalse(rebuilt["idle_fast_path"])
 
     def test_live_decision_chain_has_e2_e3_e4_lineage(self):
         with tempfile.TemporaryDirectory() as tmp:
