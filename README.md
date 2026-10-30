@@ -51,6 +51,19 @@ Version 0.2.0 adds the first Life-and-Activity Learning execution path over a re
 
 The first real fixture is the lifecycle of Issue #6, whose accepted P0 decision was followed by a GitHub `closed` event. This is development/dogfooding evidence, not an unseen F1 benchmark.
 
+## MVP-2 Read-only Shadow Collector
+
+Version 0.3.0 adds resumable continuous intake for selected AIMETON GitHub repositories:
+
+- authenticated GET-only GitHub REST reader with no mutation methods;
+- durable SQLite E0 storage with append-only evidence IDs and digest collision checks;
+- independent resumable cursors for issue events and issue comments;
+- restart/idempotency: already ingested source objects are not duplicated;
+- ingestion-time partition tagging: `development`, `holdout_candidate`, or `frozen_holdout`;
+- no paid LLM dependency and no dedicated AMOS compute requirement.
+
+This collector remains Shadow-only. Scheduling and persistent placement must follow AIMETON infrastructure contracts rather than repository-local ad hoc deployment.
+
 ## Repository layout
 
 - docs/architecture — contracts and architecture decisions
@@ -73,7 +86,7 @@ The baseline workflow materializes an exact commit SHA with Git directly, requir
 
 ## Status
 
-**MVP-1 Shadow LDC under acceptance.** MVP-0 Continuity Kernel is accepted. The immediate P0 is Issue #4: prove real AIMETON development-stream ingestion/replay in Shadow mode. Architectural effectiveness claims remain hypotheses until frozen holdout and preregistered F1.
+**MVP-2 read-only Shadow collector under acceptance.** MVP-0 Continuity Kernel and MVP-1 Shadow LDC are accepted. The immediate P0 is Issue #20: prove resumable live GitHub collection, exactly-once E0 intake for a newly occurring event, and correct infrastructure placement. Architectural effectiveness claims remain hypotheses until frozen holdout and preregistered F1.
 
 ## License and trademarks
 
