@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -61,6 +62,31 @@ class ShadowLdcTest(unittest.TestCase):
         self.assertEqual(len(before_close["semantic_layers"]["E4"]), 0)
         self.assertEqual(len(after_close["semantic_layers"]["E4"]), 1)
         self.assertIn("github_mutation", after_close["authority_envelope"]["forbidden_actions"])
+
+    def test_fresh_process_replay_cli_emits_trace(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp) / "shadow.json"
+            completed = subprocess.run(
+                [
+                    sys.executable,
+                    "scripts/replay_shadow_ldc.py",
+                    str(FIXTURE),
+                    "--as-of",
+                    "2026-10-30T14:11:09Z",
+                    "--output",
+                    str(output),
+                ],
+                cwd=ROOT,
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
+            bundle = json.loads(output.read_text(encoding="utf-8"))
+        self.assertEqual(bundle["mode"], "SHADOW")
+        self.assertEqual(bundle["projections"]["O"]["state"], "closed")
+        self.assertEqual(bundle["trace"]["snapshot_id"], bundle["snapshot_id"])
+        self.assertEqual(len(bundle["trace"]["compatibility"]), 6)
 
     def test_shadow_case_emits_all_cr_reason_codes(self) -> None:
         bundle = compile_shadow_case(
