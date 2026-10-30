@@ -240,6 +240,10 @@ def collect_repository(
             ("pull_snapshots", f"/repos/{repo}/pulls?state=all&sort=updated&direction=asc", _pull_snapshot_envelope, "updated_at"),
             ("issue_comments", f"/repos/{repo}/issues/comments?sort=created&direction=asc", _comment_envelope, "created_at"),
         ]
+    elif source_mode == "versioned_pull_snapshots":
+        streams = [
+            ("pull_snapshots", f"/repos/{repo}/pulls?state=all&sort=updated&direction=asc", _pull_snapshot_envelope, "updated_at"),
+        ]
     else:
         raise ValueError("invalid GitHub source mode")
 

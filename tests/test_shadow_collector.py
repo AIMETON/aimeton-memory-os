@@ -212,5 +212,41 @@ class ShadowCollectorTest(unittest.TestCase):
             store.close()
 
 
+    def test_pr_only_mode_excludes_partial_issue_comment_view(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            store = SQLiteShadowStore(Path(tmp) / "shadow.db")
+            partial_comment = {
+                "id": 3001,
+                "url": "https://api.github.com/repos/AIMETON/Choke_ring_antenna/issues/comments/3001",
+                "issue_url": "https://api.github.com/repos/AIMETON/Choke_ring_antenna/issues/74",
+                "body": "visible PR comment but not a complete Issues stream",
+                "created_at": "2026-10-30T15:20:00Z",
+                "author_association": "MEMBER",
+                "user": {"login": "Dimar4713"},
+            }
+            pull = {
+                "id": 4001,
+                "number": 64,
+                "url": "https://api.github.com/repos/AIMETON/Choke_ring_antenna/pulls/64",
+                "state": "open",
+                "updated_at": "2026-10-30T15:19:00Z",
+                "user": {"login": "Dimar4713"},
+            }
+            result = collect_repository(
+                "AIMETON/Choke_ring_antenna",
+                store,
+                FakeClient([], [partial_comment], [pull]),
+                source_mode="versioned_pull_snapshots",
+            )
+            self.assertEqual(result["source_mode"], "versioned_pull_snapshots")
+            self.assertEqual(result["appended"], 1)
+            self.assertIsNotNone(store.get_cursor("github:AIMETON/Choke_ring_antenna:pull_snapshots"))
+            self.assertIsNone(store.get_cursor("github:AIMETON/Choke_ring_antenna:issue_comments"))
+            envelopes = store.iter_envelopes()
+            self.assertEqual(len(envelopes), 1)
+            self.assertEqual(envelopes[0]["source_type"], "github.pull_snapshot")
+            store.close()
+
+
 if __name__ == "__main__":
     unittest.main()
