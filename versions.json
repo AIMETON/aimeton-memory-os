@@ -6,5 +6,5 @@
   "coordination_snapshot_schema": "v0.2",
   "continuity_state_schema": "v0.1",
   "evidence_envelope_schema": "v0.2",
-  "status": "mvp2-live-shadow-processing"
+  "status": "mvp2-continuous-shadow-accepted"
 }
