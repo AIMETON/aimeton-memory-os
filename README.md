@@ -77,6 +77,19 @@ Version 0.4.0 completes the processing half of the continuous Shadow path:
 
 The initial live decision-lineage target is the already persisted Issue #6 acceptance comment followed by its closed event. The post-start Issue #20 marker is the live per-evidence trace acceptance target.
 
+## MVP-3 Multi-repository Shadow replication candidate
+
+Version 0.5.0 adds a least-privilege second-source mode for active private AIMETON application repositories:
+
+- the accepted public AMOS source keeps `issue_events_plus_comments`;
+- repositories where repo-wide issue events are intentionally unavailable may use `versioned_pull_snapshots_plus_comments`;
+- each pull-request state version is persisted as a distinct immutable E0 snapshot keyed by source object and `updated_at`;
+- repositories keep independent durable stream cursors in the same SQLite store;
+- post-persistence processing reuses the same E1-E4, V/R/O/A and CR-01…CR-06 semantics;
+- pull snapshots preserve repository scope, pull/issue number and observed source state in the immutable Shadow trace.
+
+The first replication target is private `AIMETON/Choke_ring_antenna`. This code is a live-acceptance candidate, not yet evidence that the second repository has been accepted at runtime.
+
 ## Repository layout
 
 - docs/architecture — contracts and architecture decisions
@@ -99,7 +112,7 @@ The baseline workflow materializes an exact commit SHA with Git directly, requir
 
 ## Status
 
-**MVP-2 continuous Shadow path ACCEPTED for one AIMETON repository.** Live E0 collection, post-persistence E1/E2/E3/E4 derivation, V/R/O/A projection, CR-01…CR-06 admission and immutable Shadow traces are accepted on the persistent main-server runtime. The next critical path is replication on one active AIMETON application repository while preserving the same compatibility semantics and evaluation partitioning. Architectural effectiveness claims remain hypotheses until frozen holdout and preregistered F1.
+**MVP-2 continuous Shadow path ACCEPTED for one AIMETON repository; MVP-3 multi-repository replication is a live-acceptance candidate.** The product code can ingest `AIMETON/Choke_ring_antenna` through versioned pull snapshots plus issue comments while preserving the accepted compatibility semantics and evaluation partitioning. Runtime acceptance still requires private-source deployment, independent cursors, exactly-once post-start evidence and immutable trace read-back. Architectural effectiveness claims remain hypotheses until frozen holdout and preregistered F1.
 
 ## License and trademarks
 

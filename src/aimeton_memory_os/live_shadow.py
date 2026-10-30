@@ -39,6 +39,8 @@ def _actor(payload: dict[str, Any]) -> tuple[str | None, str]:
 
 def _issue_number(envelope: dict[str, Any]) -> int | None:
     payload = envelope["payload"]
+    if envelope["source_type"] == "github.pull_snapshot" and payload.get("number") is not None:
+        return int(payload["number"])
     issue = payload.get("issue")
     if isinstance(issue, dict) and issue.get("number") is not None:
         return int(issue["number"])
@@ -93,7 +95,7 @@ def compile_envelope_bundle(envelope: dict[str, Any]) -> dict[str, Any]:
         "O": {
             "entity_type": envelope["source_type"],
             "entity_id": envelope["source_object_id"],
-            "state": str(payload.get("event") or "observed"),
+            "state": str(payload.get("event") or payload.get("state") or "observed"),
             "valid_at": envelope["observed_at"],
         },
         "A": {

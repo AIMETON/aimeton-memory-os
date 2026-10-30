@@ -175,12 +175,12 @@ def _iter_pages(client: Any, path: str, *, max_pages: int = 20) -> Iterable[dict
     raise RuntimeError(f"pagination limit reached for {path}")
 
 
-def _cursor_for(item: dict[str, Any]) -> Cursor:
-    return Cursor(str(item["created_at"]), int(item["id"]))
+def _cursor_for(item: dict[str, Any], timestamp_field: str = "created_at") -> Cursor:
+    return Cursor(str(item[timestamp_field]), int(item["id"]))
 
 
-def _after(cursor: Cursor | None, item: dict[str, Any]) -> bool:
-    return cursor is None or _cursor_for(item) > cursor
+def _after(cursor: Cursor | None, item: dict[str, Any], timestamp_field: str = "created_at") -> bool:
+    return cursor is None or _cursor_for(item, timestamp_field) > cursor
 
 
 def _event_envelope(repo: str, item: dict[str, Any], *, partition: str) -> dict[str, Any]:
@@ -207,29 +207,57 @@ def _comment_envelope(repo: str, item: dict[str, Any], *, partition: str) -> dic
     )
 
 
+def _pull_snapshot_envelope(repo: str, item: dict[str, Any], *, partition: str) -> dict[str, Any]:
+    updated_at = str(item["updated_at"])
+    return make_evidence_envelope(
+        evidence_id=f"github:pull-snapshot:{repo}:{item['id']}:{updated_at}",
+        source_type="github.pull_snapshot",
+        source_ref=str(item.get("url") or f"https://api.github.com/repos/{repo}/pulls/{item['number']}"),
+        source_object_id=f"{item['id']}@{updated_at}",
+        observed_at=updated_at,
+        payload=item,
+        partition=partition,
+    )
+
+
 def collect_repository(
     repo: str,
     store: SQLiteShadowStore,
     client: Any,
     *,
     partition: str = "development",
+    source_mode: str = "issue_events_plus_comments",
 ) -> dict[str, Any]:
     if partition not in {"development", "holdout_candidate", "frozen_holdout"}:
         raise ValueError("invalid evaluation partition")
+    if source_mode == "issue_events_plus_comments":
+        streams = [
+            ("issue_events", f"/repos/{repo}/issues/events", _event_envelope, "created_at"),
+            ("issue_comments", f"/repos/{repo}/issues/comments?sort=created&direction=asc", _comment_envelope, "created_at"),
+        ]
+    elif source_mode == "versioned_pull_snapshots_plus_comments":
+        streams = [
+            ("pull_snapshots", f"/repos/{repo}/pulls?state=all&sort=updated&direction=asc", _pull_snapshot_envelope, "updated_at"),
+            ("issue_comments", f"/repos/{repo}/issues/comments?sort=created&direction=asc", _comment_envelope, "created_at"),
+        ]
+    else:
+        raise ValueError("invalid GitHub source mode")
 
-    streams = [
-        ("issue_events", f"/repos/{repo}/issues/events", _event_envelope),
-        ("issue_comments", f"/repos/{repo}/issues/comments?sort=created&direction=asc", _comment_envelope),
-    ]
-    result: dict[str, Any] = {"repository": repo, "partition": partition, "streams": {}, "appended": 0}
-    for name, path, envelope_fn in streams:
+    result: dict[str, Any] = {
+        "repository": repo,
+        "partition": partition,
+        "source_mode": source_mode,
+        "streams": {},
+        "appended": 0,
+    }
+    for name, path, envelope_fn, timestamp_field in streams:
         stream_key = f"github:{repo}:{name}"
         cursor = store.get_cursor(stream_key)
         appended = 0
         newest = cursor
         for item in _iter_pages(client, path):
-            candidate = _cursor_for(item)
-            if not _after(cursor, item):
+            candidate = _cursor_for(item, timestamp_field)
+            if not _after(cursor, item, timestamp_field):
                 continue
             envelope = envelope_fn(repo, item, partition=partition)
             if store.append(envelope):

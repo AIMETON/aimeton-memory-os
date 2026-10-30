@@ -20,6 +20,8 @@ def main() -> int:
     parser.add_argument("--db", required=True)
     parser.add_argument("--partition", default="development",
                         choices=["development","holdout_candidate","frozen_holdout"])
+    parser.add_argument("--source-mode", default="issue_events_plus_comments",
+                        choices=["issue_events_plus_comments","versioned_pull_snapshots_plus_comments"])
     args = parser.parse_args()
 
     store = SQLiteShadowStore(args.db)
@@ -29,6 +31,7 @@ def main() -> int:
             store,
             GitHubReadOnlyClient(),
             partition=args.partition,
+            source_mode=args.source_mode,
         )
     finally:
         store.close()

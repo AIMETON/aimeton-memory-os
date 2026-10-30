@@ -4,7 +4,7 @@
   "product": "AIMETON Cognitive Operations Complex",
   "namespace": "AIMETON.COGOPS",
   "license": "Apache-2.0",
-  "status": "mvp2-continuous-shadow-accepted",
+  "status": "mvp3-multirepo-shadow-candidate",
   "authoritative_interfaces": [
     "evidence",
     "descriptor",

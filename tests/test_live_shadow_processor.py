@@ -144,5 +144,44 @@ class LiveShadowProcessorTest(unittest.TestCase):
             self.assertEqual({p.name: p.read_bytes() for p in traces.glob("*.json")}, snapshot)
 
 
+    def test_pull_snapshot_trace_preserves_private_repo_scope_and_state(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            db = root / "shadow.db"
+            traces = root / "traces"
+            store = SQLiteShadowStore(db)
+            payload = {
+                "id": 4001,
+                "number": 64,
+                "url": "https://api.github.com/repos/AIMETON/Choke_ring_antenna/pulls/64",
+                "state": "open",
+                "updated_at": "2026-10-30T15:19:00Z",
+                "user": {"login": "Dimar4713"},
+            }
+            evidence_id = "github:pull-snapshot:AIMETON/Choke_ring_antenna:4001:2026-10-30T15:19:00Z"
+            store.append(make_evidence_envelope(
+                evidence_id=evidence_id,
+                source_type="github.pull_snapshot",
+                source_ref=payload["url"],
+                source_object_id="4001@2026-10-30T15:19:00Z",
+                observed_at=payload["updated_at"],
+                payload=payload,
+                partition="development",
+            ))
+            store.close()
+            result = process_shadow_store(db, traces)
+            self.assertEqual(result["evidence_count"], 1)
+            pull_trace = next(
+                x for x in self._traces(traces)
+                if x.get("trace", {}).get("source_evidence_id") == evidence_id
+            )
+            self.assertEqual(pull_trace["projections"]["V"]["scope"], "AIMETON/Choke_ring_antenna")
+            self.assertEqual(pull_trace["projections"]["V"]["issue_number"], 64)
+            self.assertEqual(pull_trace["projections"]["O"]["state"], "open")
+            self.assertEqual(len(pull_trace["compatibility"]), 6)
+            self.assertTrue(all(c["state"] == "satisfied" for c in pull_trace["compatibility"]))
+            self.assertFalse(pull_trace["trace"]["source_mutation_performed"])
+
+
 if __name__ == "__main__":
     unittest.main()
