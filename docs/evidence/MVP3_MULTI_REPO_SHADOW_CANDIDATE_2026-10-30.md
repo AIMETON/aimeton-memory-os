@@ -108,6 +108,24 @@ Independent corrected readback:
 
 This proves that the corrected second-source path can read an existing immutable private PR snapshot and recover its deterministic Shadow trace without source mutation.
 
+## Fresh-cycle idempotency
+
+A second independent readback was executed after additional persistent timer cycles:
+
+- run: `41088956352` — SUCCESS
+- same source PR: 74
+- same marker evidence id: `github:pull-snapshot:AIMETON/Choke_ring_antenna:5086043627:2026-10-30T14:35:16Z`
+- marker E0 count: 1
+- marker immutable trace count: 1
+- Choke E0 total: 69, unchanged
+- Choke pull cursor: `5086043627 @ 2026-10-30T14:35:16Z`, unchanged
+- total E0: 123 versus 121 at deployment
+- memory-os E0: 54 versus 52 at deployment
+- readback invoked collector: false
+- repository/provider mutation: false
+
+The two new E0 records came from the active memory-os source while the unchanged Choke snapshot remained exactly-once. This satisfies the fresh-process/timer-cycle idempotency criterion without requiring any source mutation.
+
 ## Remaining acceptance criterion
 
 MVP-3 is deliberately **not accepted yet**.
