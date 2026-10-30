@@ -79,16 +79,16 @@ The initial live decision-lineage target is the already persisted Issue #6 accep
 
 ## MVP-3 Multi-repository Shadow replication candidate
 
-Version 0.5.0 adds a least-privilege second-source mode for active private AIMETON application repositories:
+Version 0.5.1 corrects the least-privilege second-source contract for active private AIMETON application repositories:
 
 - the accepted public AMOS source keeps `issue_events_plus_comments`;
-- repositories where repo-wide issue events are intentionally unavailable may use `versioned_pull_snapshots_plus_comments`;
-- each pull-request state version is persisted as a distinct immutable E0 snapshot keyed by source object and `updated_at`;
+- repositories with a verified complete Issues view may use `versioned_pull_snapshots_plus_comments`;
+- `AIMETON/Choke_ring_antenna` uses `versioned_pull_snapshots` because its runtime credential has a complete PR view but only a partial Issues-comment view; each pull-request state version is persisted as a distinct immutable E0 snapshot keyed by source object and `updated_at`;
 - repositories keep independent durable stream cursors in the same SQLite store;
 - post-persistence processing reuses the same E1-E4, V/R/O/A and CR-01…CR-06 semantics;
 - pull snapshots preserve repository scope, pull/issue number and observed source state in the immutable Shadow trace.
 
-The first replication target is private `AIMETON/Choke_ring_antenna`. This code is a live-acceptance candidate, not yet evidence that the second repository has been accepted at runtime.
+The first replication target is private `AIMETON/Choke_ring_antenna`. Diagnostic run `41085827899` proved the runtime credential sees all 67 pull requests but only 2 of 52 repository issue comments, so issue comments are excluded from this source contract rather than silently treated as complete. This code remains a live-acceptance candidate until the corrected runtime is deployed and a post-start PR state is replayed exactly once.
 
 ## Repository layout
 
