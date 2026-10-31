@@ -21,7 +21,7 @@ def main() -> int:
     parser.add_argument("--partition", default="development",
                         choices=["development","holdout_candidate","frozen_holdout"])
     parser.add_argument("--source-mode", default="issue_events_plus_comments",
-                        choices=["issue_events_plus_comments","versioned_pull_snapshots_plus_comments","versioned_pull_snapshots"])
+                        choices=["issue_events_plus_comments","versioned_pull_snapshots_plus_comments","versioned_pull_snapshots","activity_stream"])
     args = parser.parse_args()
 
     store = SQLiteShadowStore(args.db)
