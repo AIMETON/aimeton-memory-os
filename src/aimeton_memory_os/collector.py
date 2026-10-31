@@ -277,7 +277,11 @@ def collect_repository(
         "appended": 0,
     }
     for name, path, envelope_fn, timestamp_field in streams:
-        stream_key = f"github:{repo}:{name}"
+        # A legacy private comment cursor may reflect partial token visibility.
+        # Re-read complete history once under the newly accepted Issues scope;
+        # immutable E0 IDs deduplicate any previously captured comments.
+        cursor_name = "issue_comments_complete_v1" if source_mode == "activity_stream" and name == "issue_comments" else name
+        stream_key = f"github:{repo}:{cursor_name}"
         cursor = store.get_cursor(stream_key)
         appended = 0
         newest = cursor
