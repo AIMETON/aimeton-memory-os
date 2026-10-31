@@ -160,6 +160,8 @@ class GitHubReadOnlyClient:
         request = urllib.request.Request(url, headers=headers, method="GET")
         with urllib.request.urlopen(request, timeout=30) as response:
             payload = json.loads(response.read().decode("utf-8"))
+        if "/actions/runs" in path and isinstance(payload, dict):
+            payload = payload.get("workflow_runs")
         if not isinstance(payload, list):
             raise ValueError(f"expected GitHub list response for {path}")
         return payload
@@ -220,6 +222,19 @@ def _pull_snapshot_envelope(repo: str, item: dict[str, Any], *, partition: str) 
     )
 
 
+def _workflow_run_envelope(repo: str, item: dict[str, Any], *, partition: str) -> dict[str, Any]:
+    updated_at = str(item["updated_at"])
+    return make_evidence_envelope(
+        evidence_id=f"github:workflow-run:{repo}:{item['id']}:{updated_at}",
+        source_type="github.workflow_run",
+        source_ref=str(item.get("url") or f"https://api.github.com/repos/{repo}/actions/runs/{item['id']}"),
+        source_object_id=f"{item['id']}@{updated_at}",
+        observed_at=updated_at,
+        payload=item,
+        partition=partition,
+    )
+
+
 def collect_repository(
     repo: str,
     store: SQLiteShadowStore,
@@ -239,6 +254,13 @@ def collect_repository(
         streams = [
             ("pull_snapshots", f"/repos/{repo}/pulls?state=all&sort=updated&direction=asc", _pull_snapshot_envelope, "updated_at"),
             ("issue_comments", f"/repos/{repo}/issues/comments?sort=created&direction=asc", _comment_envelope, "created_at"),
+        ]
+    elif source_mode == "activity_stream":
+        streams = [
+            ("pull_snapshots", f"/repos/{repo}/pulls?state=all&sort=updated&direction=asc", _pull_snapshot_envelope, "updated_at"),
+            ("issue_comments", f"/repos/{repo}/issues/comments?sort=created&direction=asc", _comment_envelope, "created_at"),
+            ("issue_events", f"/repos/{repo}/issues/events", _event_envelope, "created_at"),
+            ("workflow_runs", f"/repos/{repo}/actions/runs?exclude_pull_requests=false", _workflow_run_envelope, "updated_at"),
         ]
     elif source_mode == "versioned_pull_snapshots":
         streams = [
