@@ -212,6 +212,47 @@ class ShadowCollectorTest(unittest.TestCase):
             store.close()
 
 
+    def test_activity_stream_records_command_and_workflow_once(self):
+        class ActivityClient(FakeClient):
+            def get_page(self, path, page, per_page=100):
+                if "/actions/runs" in path:
+                    return [{
+                        "id": 41155320060,
+                        "url": "https://api.github.com/repos/AIMETON/Choke_ring_antenna/actions/runs/41155320060",
+                        "event": "issue_comment", "status": "completed",
+                        "conclusion": "success",
+                        "created_at": "2026-10-31T01:25:57Z",
+                        "updated_at": "2026-10-31T01:26:08Z",
+                    }] if page == 1 else []
+                return super().get_page(path, page, per_page)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            store = SQLiteShadowStore(Path(tmp) / "shadow.db")
+            comment = {
+                "id": 6537145047,
+                "url": "https://api.github.com/repos/AIMETON/Choke_ring_antenna/issues/comments/6537145047",
+                "issue_url": "https://api.github.com/repos/AIMETON/Choke_ring_antenna/issues/2",
+                "body": "C02 read-only verification",
+                "created_at": "2026-10-31T01:25:53Z",
+                "user": {"login": "Dimar4713"},
+            }
+            client = ActivityClient([], [comment], [])
+            first = collect_repository(
+                "AIMETON/Choke_ring_antenna", store, client,
+                source_mode="activity_stream",
+            )
+            self.assertEqual(first["appended"], 2)
+            self.assertEqual({x["source_type"] for x in store.iter_envelopes()},
+                             {"github.issue_comment", "github.workflow_run"})
+            again = collect_repository(
+                "AIMETON/Choke_ring_antenna", store, client,
+                source_mode="activity_stream",
+            )
+            self.assertEqual(again["appended"], 0)
+            self.assertIsNotNone(store.get_cursor(
+                "github:AIMETON/Choke_ring_antenna:workflow_runs"))
+            store.close()
+
     def test_pr_only_mode_excludes_partial_issue_comment_view(self):
         with tempfile.TemporaryDirectory() as tmp:
             store = SQLiteShadowStore(Path(tmp) / "shadow.db")
