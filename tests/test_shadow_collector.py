@@ -237,6 +237,9 @@ class ShadowCollectorTest(unittest.TestCase):
                 "user": {"login": "Dimar4713"},
             }
             client = ActivityClient([], [comment], [])
+            store.advance_cursor("github:AIMETON/Choke_ring_antenna:issue_comments",
+                                 __import__("aimeton_memory_os.collector", fromlist=["Cursor"]).Cursor(
+                                     "2026-10-31T02:00:00Z", 9999999999))
             first = collect_repository(
                 "AIMETON/Choke_ring_antenna", store, client,
                 source_mode="activity_stream",
@@ -249,6 +252,8 @@ class ShadowCollectorTest(unittest.TestCase):
                 source_mode="activity_stream",
             )
             self.assertEqual(again["appended"], 0)
+            self.assertIsNotNone(store.get_cursor(
+                "github:AIMETON/Choke_ring_antenna:issue_comments_complete_v1"))
             self.assertIsNotNone(store.get_cursor(
                 "github:AIMETON/Choke_ring_antenna:workflow_runs"))
             store.close()
