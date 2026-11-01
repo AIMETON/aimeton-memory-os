@@ -45,7 +45,7 @@ class AuditHTTPG3Test(unittest.TestCase):
             response = conn.getresponse()
             status = response.status
             data = response.read()
-            return status, dict(response.getheaders()), json.loads(data)
+            return status, dict(response.getheaders()), (json.loads(data) if data else {})
         finally:
             conn.close()
 
