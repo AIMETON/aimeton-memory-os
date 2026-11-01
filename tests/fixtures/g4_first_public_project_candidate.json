@@ -1,0 +1,71 @@
+{
+  "candidate_schema": "amos.g4-public-candidate.v1",
+  "project_source_commit": "b45900a3bc2938faa25d2c5d00720601ef4316b9",
+  "publication_authorized": false,
+  "real_e0_included": false,
+  "release_status": "OWNER_APPROVAL_REQUIRED",
+  "source": {
+    "project_id": "AIMETON/aimeton-memory-os",
+    "as_of_utc": "2026-11-01T12:25:00Z",
+    "policy_version": "public-curated-v1",
+    "records": [
+      {
+        "id": "PUB-001",
+        "kind": "objective",
+        "status": "VERIFIED",
+        "statement": "The public README defines AMOS as an evidence-governed four-axis memory core and context compiler, not as an autonomous agent executor.",
+        "evidence": [
+          "https://github.com/AIMETON/aimeton-memory-os/blob/b45900a3bc2938faa25d2c5d00720601ef4316b9/README.md"
+        ]
+      },
+      {
+        "id": "PUB-002",
+        "kind": "decision",
+        "status": "VERIFIED",
+        "statement": "The G0 field-classification policy defaults raw E0 payloads, internal traces and derived private knowledge to denial pending an explicit project-owner release decision.",
+        "evidence": [
+          "https://github.com/AIMETON/aimeton-memory-os/blob/b45900a3bc2938faa25d2c5d00720601ef4316b9/docs/architecture/EXTERNAL_AUDIT_G0_FIELD_CLASSIFICATION.md"
+        ]
+      },
+      {
+        "id": "PUB-003",
+        "kind": "test",
+        "status": "VERIFIED",
+        "statement": "An offline synthetic audit package exporter and negative field-disclosure checks were accepted through AMOS PR 43; the acceptance does not validate real-project disclosure.",
+        "evidence": [
+          "https://github.com/AIMETON/aimeton-memory-os/pull/43",
+          "https://github.com/AIMETON/aimeton-memory-os/actions/runs/41288230282"
+        ]
+      },
+      {
+        "id": "PUB-004",
+        "kind": "test",
+        "status": "VERIFIED",
+        "statement": "A synthetic-only loopback HTTP gateway with atomic one-time redemption and request negative tests was accepted through AMOS PRs 46 and 47.",
+        "evidence": [
+          "https://github.com/AIMETON/aimeton-memory-os/pull/46",
+          "https://github.com/AIMETON/aimeton-memory-os/pull/47"
+        ]
+      },
+      {
+        "id": "PUB-005",
+        "kind": "limitation",
+        "status": "VERIFIED",
+        "statement": "A self-consistent release digest is not authentication of the project owner's publication approval. The G4 curated release remains a candidate and may not be served as authorized project content.",
+        "evidence": [
+          "https://github.com/AIMETON/aimeton-memory-os/blob/b45900a3bc2938faa25d2c5d00720601ef4316b9/docs/architecture/G4_CURATED_AUDIT_RELEASE.md"
+        ]
+      },
+      {
+        "id": "PUB-006",
+        "kind": "next_action",
+        "status": "UNRESOLVED",
+        "statement": "Before the first real-project release, obtain an authenticated, auditable owner decision that binds the exact curated snapshot, audience, retention and permitted evidence fields; then collect quarantined external audit findings.",
+        "evidence": [
+          "https://github.com/AIMETON/aimeton-memory-os/blob/b45900a3bc2938faa25d2c5d00720601ef4316b9/docs/architecture/G4_CURATED_AUDIT_RELEASE.md"
+        ]
+      }
+    ]
+  },
+  "notes": "Only manually curated statements grounded in public repository documents and CI results. No raw E0, private trace, internal issue comment, personal data, or authenticated release grant. This file is not served by G3."
+}
