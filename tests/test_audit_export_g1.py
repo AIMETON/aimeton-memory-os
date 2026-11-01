@@ -31,7 +31,7 @@ class AuditExportG1Test(unittest.TestCase):
         verify_synthetic_audit_pack(snapshot, manifest)
         source["records"].reverse()
         self.assertEqual(export_synthetic_audit_pack(source), (snapshot, manifest))
-        source["records"][-1]["deeply_nested"]["secret"] = "OTHER_SECRET"
+        next(row for row in source["records"] if row["export_rule"] == "deny")["deeply_nested"]["secret"] = "OTHER_SECRET"
         self.assertEqual(export_synthetic_audit_pack(source), (snapshot, manifest))
 
     def test_reject_real_project_and_untrusted_profiles(self):
