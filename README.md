@@ -90,6 +90,30 @@ Version 0.5.1 corrects the least-privilege second-source contract for active pri
 
 The first replication target is private `AIMETON/Choke_ring_antenna`. Diagnostic run `41085827899` proved the runtime credential sees all 67 pull requests but only 2 of 52 repository issue comments, so issue comments are excluded from this source contract rather than silently treated as complete. This code remains a live-acceptance candidate until the corrected runtime is deployed and a post-start PR state is replayed exactly once.
 
+## MVP-4 Provenance-governed C02 activity (bounded acceptance)
+
+As of 2026-11-01, the live AMOS Shadow collector uses `activity_stream` for
+`AIMETON/Choke_ring_antenna`: PR snapshots, complete Issues comments,
+Issues events and versioned Actions workflow runs. The existing token now has
+Issues read permission. The historical PR-only limitation documented above
+is **superseded in runtime**, not a current source-coverage contract.
+
+The C02 Command Router now records an exact downstream run ID returned by
+GitHub workflow dispatch in a GitHub Actions bot-authored receipt. AMOS validates
+FOUR immutable E0 sources (owner command, bot receipt, router run, downstream
+run), SHA-256 of the command, source identity and workflow identity before
+claiming a verified **dispatch** link. It does not equate dispatch success with
+successful execution or a scientific admission.
+
+The post-persistence processor emits an immutable
+`amos.live-dispatch-provenance` trace from terminal run versions without
+extra network calls. An independently replayed live example proved
+`causal_status=VERIFIED` while retaining a downstream `failure`:
+[full acceptance record](docs/evidence/MVP4_C02_DISPATCH_PROVENANCE_ACCEPTANCE_2026-11-01.md).
+Historical C02 events without a trustworthy exact link remain UNRESOLVED.
+Mission-state reconstruction and incremental affected-event processing remain
+open [in Issue #36](https://github.com/AIMETON/aimeton-memory-os/issues/36).
+
 ## Repository layout
 
 - docs/architecture — contracts and architecture decisions
@@ -112,7 +136,14 @@ The baseline workflow materializes an exact commit SHA with Git directly, requir
 
 ## Status
 
-**MVP-2 continuous Shadow path ACCEPTED for one AIMETON repository; MVP-3 multi-repository replication is a live-acceptance candidate.** The product code can ingest `AIMETON/Choke_ring_antenna` through complete versioned pull snapshots only; the partial Issues-comment view is intentionally excluded from the source contract while preserving the accepted compatibility semantics and evaluation partitioning. Runtime acceptance still requires private-source deployment, independent cursors, exactly-once post-start evidence and immutable trace read-back. Architectural effectiveness claims remain hypotheses until frozen holdout and preregistered F1.
+**MVP-3 multi-source Shadow collection ACCEPTED; MVP-4 exact C02
+command-to-dispatch provenance and immutable trace ACCEPTED as a bounded
+vertical slice.** The live server uses the five-minute polling timer, durable
+append-only E0 and source-independent cursors; run-specific immutable evidence
+is independently verified. Neither full engineering mission recovery,
+performance/ablation gates nor authenticated webhook delivery has yet passed
+acceptance. Verified routing is not proof that downstream work succeeded.
+Architectural effectiveness remains a hypothesis pending frozen-holdout evals.
 
 ## License and trademarks
 
@@ -135,6 +166,6 @@ each existing trace byte-for-byte). Running with `--verify-all` also detects
 immutable collision/tampering in existing traces.
 
 This is **compute optimisation**, not webhook delivery: the currently deployed
-one-minute GitHub polling timer continues unchanged until an independently
+five-minute GitHub polling timer continues until an independently
 verified event receiver, authenticated delivery, durable queue and reconciliation
 fallback are available. Do not reduce intake frequency before that deployment.
