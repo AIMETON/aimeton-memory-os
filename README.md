@@ -114,6 +114,44 @@ Historical C02 events without a trustworthy exact link remain UNRESOLVED.
 Mission-state reconstruction and incremental affected-event processing remain
 open [in Issue #36](https://github.com/AIMETON/aimeton-memory-os/issues/36).
 
+## G3/G4 External Audit Gateway — bounded pilot
+
+As of 2026-11-01, synthetic-only G3 staging is available at
+[aimeton.ru/audit-demo](https://aimeton.ru/audit-demo/), with a fixed G1
+synthetic package and G2 one-time/continuing grant engine. The web route is
+separate from production AMOS E0 and private project data.
+
+The existing AIMETON site administrator can manage synthetic audit grants at
+`/admin/audit` using the existing authenticated session and CSRF gate.
+[Site PR #47](https://github.com/AIMETON/aimeton-site/pull/47) was deployed
+under exact SHA `5e970cc3b1754abfe9991f7568e70fa04ff4a151`.
+Independent isolated server acceptance
+[infra run #41306260445](https://github.com/AIMETON/aimeton-infrastructure/actions/runs/41306260445)
+passed: login/session, CSRF, grant issue/list/revoke, 1-of-12 concurrent
+one-time redemption, continuing redemption and no raw token in audit logs.
+The smoke uses throwaway SQLite databases, not production admin or AMOS E0.
+
+G4 real-project work is currently **not an authorized public release**:
+- [PR #48](https://github.com/AIMETON/aimeton-memory-os/pull/48)
+  adds a deterministic, digest-bound curated public-source package compiler
+  and a separate QUARANTINED external findings store.
+- [PR #49](https://github.com/AIMETON/aimeton-memory-os/pull/49)
+  adds the source-pinned, six-record
+  `tests/fixtures/g4_first_public_project_candidate.json` for the
+  publicly documented `AIMETON/aimeton-memory-os` project. Explicit
+  `publication_authorized=false`; no private E0 material is included.
+- [PR #50](https://github.com/AIMETON/aimeton-memory-os/pull/50)
+  binds quarantined external findings to the exact snapshot and known
+  `PUB-NNN` reference, with negative tests for forged manifests,
+  unknown project items and unapproved evidence URLs.
+
+**Authority boundary:** digest equality and public GitHub visibility do
+not constitute authenticated owner release approval. Real-project audit
+links and an external model review remain blocked pending exact-snapshot
+owner consent, identity/audience policy and independent external reviewer
+admission. External findings must never automatically update E0, E3/E4 or
+cause engineering operations. Current G3 remains synthetic only.
+
 ## Repository layout
 
 - docs/architecture — contracts and architecture decisions
