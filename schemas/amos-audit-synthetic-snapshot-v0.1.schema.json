@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aimeton.ru/schemas/amos-audit-synthetic-snapshot-v0.1.schema.json",
+  "title": "AMOS synthetic-only audit snapshot v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "project_id",
+    "as_of_utc",
+    "release_status",
+    "audit_authority",
+    "policy_version",
+    "records"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "amos.audit-pack.synthetic.v0.1"
+    },
+    "project_id": {
+      "const": "amos-synthetic-audit-demo"
+    },
+    "as_of_utc": {
+      "type": "string",
+      "pattern": "Z$"
+    },
+    "release_status": {
+      "const": "NON_PUBLIC_SYNTHETIC_TEST_ONLY"
+    },
+    "audit_authority": {
+      "const": "read_only_no_actions"
+    },
+    "policy_version": {
+      "const": "synthetic-v1"
+    },
+    "records": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 32,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "record_id",
+          "kind",
+          "title",
+          "result",
+          "provenance_status",
+          "evidence_sha256"
+        ],
+        "properties": {
+          "record_id": {
+            "type": "string",
+            "pattern": "^SYN-[0-9]{3}$"
+          },
+          "kind": {
+            "enum": [
+              "scope",
+              "observation",
+              "decision",
+              "blocker"
+            ]
+          },
+          "title": {
+            "enum": [
+              "Synthetic scope",
+              "Synthetic validation",
+              "Synthetic decision",
+              "Synthetic blocker"
+            ]
+          },
+          "result": {
+            "enum": [
+              "PASS",
+              "FAIL",
+              "UNRESOLVED"
+            ]
+          },
+          "provenance_status": {
+            "enum": [
+              "VERIFIED",
+              "UNRESOLVED"
+            ]
+          },
+          "evidence_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      }
+    }
+  }
+}
