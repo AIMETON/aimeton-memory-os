@@ -243,7 +243,7 @@ def compile_receipted_dispatch_context(
     if claim.get("target_workflow_run_id") != w_payload.get("id"):
         raise ValueError("downstream run id mismatch")
     target_workflow = claim.get("target_workflow")
-    if not isinstance(target_workflow, str) or not re.fullmatch(r"[a-zA-Z0-9_-]+\\.ya?ml", target_workflow):
+    if not isinstance(target_workflow, str) or not re.fullmatch(r"[a-zA-Z0-9_-]+\.ya?ml", target_workflow):
         raise ValueError("invalid target workflow")
     if claim.get("target_workflow_url") != w_payload.get("html_url"):
         raise ValueError("downstream url mismatch")
