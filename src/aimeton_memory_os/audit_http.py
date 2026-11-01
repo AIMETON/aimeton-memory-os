@@ -81,7 +81,15 @@ class LoopbackAuditHandler(BaseHTTPRequestHandler):
         return self._host_ok() and not self.headers.get("Origin") and not self.headers.get("Transfer-Encoding")
 
     def do_HEAD(self):
-        self._respond(405, {"error": "method_not_allowed"})
+        # RFC HEAD responses carry headers but never response body bytes.
+        self.send_response(405)
+        self.send_header("Content-Length", "0")
+        self.send_header("Cache-Control", "no-store, private")
+        self.send_header("Referrer-Policy", "no-referrer")
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("Connection", "close")
+        self.end_headers()
+        self.close_connection = True
 
     def do_GET(self):
         if not self._request_safe():
