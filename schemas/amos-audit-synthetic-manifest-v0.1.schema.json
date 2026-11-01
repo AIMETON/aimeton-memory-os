@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aimeton.ru/schemas/amos-audit-synthetic-manifest-v0.1.schema.json",
+  "title": "AMOS synthetic-only audit manifest v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "project_id",
+    "snapshot_id",
+    "snapshot_filename",
+    "snapshot_sha256",
+    "snapshot_size_bytes",
+    "as_of_utc",
+    "policy_version",
+    "release_status"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "amos.audit-manifest.synthetic.v0.1"
+    },
+    "project_id": {
+      "const": "amos-synthetic-audit-demo"
+    },
+    "snapshot_id": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "snapshot_filename": {
+      "const": "snapshot.json"
+    },
+    "snapshot_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "snapshot_size_bytes": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "as_of_utc": {
+      "type": "string",
+      "pattern": "Z$"
+    },
+    "policy_version": {
+      "const": "synthetic-v1"
+    },
+    "release_status": {
+      "const": "NON_PUBLIC_SYNTHETIC_TEST_ONLY"
+    }
+  }
+}
