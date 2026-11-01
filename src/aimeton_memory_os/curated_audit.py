@@ -68,8 +68,13 @@ def verify_release(pack,manifest):
         raise ValueError("wrong type")
     if pack.get("release_status")!="OWNER_REVIEWED_PUBLIC_SOURCES":
         raise ValueError("not approved")
-    for r in pack["records"]: validate_record(r)
-    if pack["records"]!=sorted(pack["records"],key=lambda r:r["id"]):
+    if not isinstance(pack["records"], list) or not 1 <= len(pack["records"]) <= 100:
+        raise ValueError("record count")
+    for r in pack["records"]:
+        validate_record(r)
+    if len({r["id"] for r in pack["records"]}) != len(pack["records"]):
+        raise ValueError("duplicate record")
+    if pack["records"] != sorted(pack["records"], key=lambda r: r["id"]):
         raise ValueError("unstable ordering")
     h=digest(pack)
     if manifest!={"schema_version":"amos.audit-curated-manifest.v1","snapshot_id":"sha256:"+h,
