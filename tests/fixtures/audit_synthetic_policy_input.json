@@ -1,0 +1,38 @@
+{
+  "project_id": "amos-synthetic-audit-demo",
+  "source_profile": "synthetic_fixture",
+  "export_policy_version": "synthetic-v1",
+  "as_of_utc": "2026-11-01T00:00:00Z",
+  "authorization": "synthetic-test-only",
+  "records": [
+    {
+      "record_id": "SYN-001",
+      "export_rule": "allow",
+      "security_label": "synthetic_public",
+      "kind": "scope",
+      "title": "Synthetic scope",
+      "result": "PASS",
+      "provenance_status": "VERIFIED",
+      "evidence_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    {
+      "record_id": "SYN-002",
+      "export_rule": "allow",
+      "security_label": "synthetic_public",
+      "kind": "observation",
+      "title": "Synthetic validation",
+      "result": "UNRESOLVED",
+      "provenance_status": "UNRESOLVED",
+      "evidence_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    {
+      "record_id": "PRIVATE-DO-NOT-EXPOSE",
+      "export_rule": "deny",
+      "security_label": "private",
+      "deeply_nested": {
+        "secret": "NEVER_EXPORT_THIS_SECRET",
+        "url": "http://internal.invalid/credentials"
+      }
+    }
+  ]
+}
