@@ -123,6 +123,15 @@ class AuditHTTPG3Test(unittest.TestCase):
                 self.assertNotIn("Access-Control-Allow-Origin", received_headers)
         self.assertEqual(self.redeem(grant["capability"])[0], 200)
 
+    def test_head_returns_no_body_and_does_not_redeem(self):
+        grant = self.grant()
+        path = "/v1/shares/" + grant["grant_id"] + "/preview"
+        status, headers, body = self.request("HEAD", path)
+        self.assertEqual(status, 405)
+        self.assertEqual(headers["Content-Length"], "0")
+        self.assertEqual(body, {})
+        self.assertEqual(self.redeem(grant["capability"])[0], 200)
+
     def test_no_http_admin_and_unknown_capability(self):
         self.assertEqual(self.request("POST", "/v1/admin/grants", "{}",
                                       {"Content-Type": "application/json"})[0], 404)
