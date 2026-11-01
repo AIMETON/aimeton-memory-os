@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any, Iterable
 
 from .continuity import compile_context_bundle
+from .activity_context import RECEIPT_PREFIX, compile_receipted_dispatch_context
 
 
 _REPO_RE = re.compile(r"https://api\.github\.com/repos/([^/]+/[^/]+)/")
@@ -303,6 +304,61 @@ def _decision_chains(envelopes: Iterable[dict[str, Any]]) -> list[dict[str, Any]
     return traces
 
 
+def _dispatch_provenance_chains(envelopes: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Derive only exact bot receipts; no GitHub API, no speculative matches.
+
+    Replays every *terminal* version of a referenced run so that existing
+    immutable trace versions remain reproducible after result changes.
+    """
+    comments: dict[int, dict[str, Any]] = {}
+    runs: dict[int, list[dict[str, Any]]] = {}
+    for evidence in envelopes:
+        payload = evidence["payload"]
+        identifier = payload.get("id")
+        if not isinstance(identifier, int):
+            continue
+        if evidence["source_type"] == "github.issue_comment":
+            if _repo(evidence) == "AIMETON/Choke_ring_antenna":
+                comments[identifier] = evidence
+        elif evidence["source_type"] == "github.workflow_run":
+            if _repo(evidence) == "AIMETON/Choke_ring_antenna":
+                runs.setdefault(identifier, []).append(evidence)
+
+    bundles: list[dict[str, Any]] = []
+    for receipt in comments.values():
+        payload = receipt["payload"]
+        body = payload.get("body")
+        user = payload.get("user") or {}
+        if not (isinstance(body, str) and body.startswith(RECEIPT_PREFIX)
+                and isinstance(user, dict) and user.get("login") == "github-actions[bot]"
+                and user.get("type") == "Bot"):
+            continue
+        try:
+            claim = json.loads(body[len(RECEIPT_PREFIX):])
+            command = comments.get(claim.get("source_comment_id"))
+            router_versions = runs.get(claim.get("router_run_id"), [])
+            target_versions = runs.get(claim.get("target_workflow_run_id"), [])
+            if command is None:
+                continue
+            for router in router_versions:
+                if router["payload"].get("status") != "completed":
+                    continue
+                for target in target_versions:
+                    if target["payload"].get("status") != "completed":
+                        continue
+                    try:
+                        bundle = compile_receipted_dispatch_context(
+                            command, receipt, router, target)
+                    except (ValueError, KeyError, TypeError):
+                        # Unresolved/spoofed/incomplete records remain E0,
+                        # never turn into asserted causal traces.
+                        continue
+                    bundles.append(bundle)
+        except (ValueError, KeyError, TypeError):
+            continue
+    return sorted(bundles, key=lambda b: b["snapshot_id"])
+
+
 def _canonical(payload: dict[str, Any]) -> str:
     return json.dumps(payload, ensure_ascii=False, sort_keys=True, indent=2) + "\n"
 
@@ -380,7 +436,7 @@ def process_shadow_store(
         try:
             previous = json.loads(checkpoint.read_text(encoding="utf-8"))
             if (
-                previous.get("schema_version") == 1
+                previous.get("schema_version") == 2
                 and previous.get("signature") == list(before_signature)
                 and previous.get("traces") == sum(1 for path in root.glob("*.json") if path.name != checkpoint.name)
             ):
@@ -389,6 +445,7 @@ def process_shadow_store(
                     "evidence_count": before_signature[0],
                     "envelope_traces": previous["envelope_traces"],
                     "decision_chain_traces": previous["decision_chain_traces"],
+                    "dispatch_chain_traces": previous["dispatch_chain_traces"],
                     "created": 0,
                     "existing": previous["traces"],
                     "idle_fast_path": True,
@@ -403,6 +460,7 @@ def process_shadow_store(
     existing = 0
     envelope_traces = 0
     chain_traces = 0
+    dispatch_traces = 0
 
     for envelope in envelopes:
         bundle = compile_envelope_bundle(envelope)
@@ -422,6 +480,15 @@ def process_shadow_store(
             existing += 1
         chain_traces += 1
 
+    for bundle in _dispatch_provenance_chains(envelopes):
+        trace_id = f"dispatch:{bundle['snapshot_id']}"
+        path = _trace_path(root, trace_id)
+        if _write_immutable(path, bundle):
+            created += 1
+        else:
+            existing += 1
+        dispatch_traces += 1
+
     after_signature = _store_signature(db_path)
     if after_signature != before_signature:
         raise RuntimeError("E0 changed during Shadow derivation; retry on next cycle")
@@ -429,11 +496,12 @@ def process_shadow_store(
     # Commit after every immutable trace succeeded. Crash before this write
     # falls back to deterministic replay; no partial checkpoint is admitted.
     state = {
-        "schema_version": 1,
+        "schema_version": 2,
         "signature": list(after_signature),
-        "traces": envelope_traces + chain_traces,
+        "traces": envelope_traces + chain_traces + dispatch_traces,
         "envelope_traces": envelope_traces,
         "decision_chain_traces": chain_traces,
+        "dispatch_chain_traces": dispatch_traces,
     }
     root.mkdir(parents=True, exist_ok=True)
     staged = checkpoint.with_suffix(".tmp")
@@ -446,6 +514,7 @@ def process_shadow_store(
         "evidence_count": evidence_count_before,
         "envelope_traces": envelope_traces,
         "decision_chain_traces": chain_traces,
+        "dispatch_chain_traces": dispatch_traces,
         "created": created,
         "existing": existing,
         "e0_mutation_performed": False,
