@@ -9,6 +9,7 @@ from datetime import datetime,timezone
 
 CATEGORIES={"missing_evidence","contradiction","methodology","risk","recommendation"}
 SEVERITY={"low","medium","high"}
+EVIDENCE_URL = re.compile(r"https://github[.]com/AIMETON/(?:aimeton-memory-os|aimeton-site|aimeton-infrastructure)(?:/[A-Za-z0-9_./#-]+)?\Z")
 def _canonical(obj):
     return json.dumps(obj,sort_keys=True,separators=(",",":"),ensure_ascii=False).encode()
 
@@ -25,8 +26,15 @@ def _store(db):
 def ingest_finding(db,manifest,finding,now=None):
     if not isinstance(manifest,dict) or not re.fullmatch("[0-9a-f]{64}",str(manifest.get("snapshot_sha256",""))):
         raise ValueError("snapshot binding missing")
-    if not isinstance(finding,dict) or set(finding)!={"category","severity","referenced_item","observation","recommendation"}:
+    required = {"category","severity","referenced_item","observation","recommendation"}
+    allowed = required | {"evidence_urls"}
+    if not isinstance(finding,dict) or not required <= set(finding) or not set(finding) <= allowed:
         raise ValueError("finding schema")
+    evidence_urls = finding.get("evidence_urls", [])
+    if (not isinstance(evidence_urls,list) or len(evidence_urls)>5
+            or any(not isinstance(url,str) or not EVIDENCE_URL.fullmatch(url) for url in evidence_urls)
+            or len(set(evidence_urls)) != len(evidence_urls)):
+        raise ValueError("unapproved evidence URL")
     if finding["category"] not in CATEGORIES or finding["severity"] not in SEVERITY:
         raise ValueError("finding category")
     if not re.fullmatch(r"PUB-[0-9]{3}",str(finding["referenced_item"])):
@@ -59,3 +67,18 @@ def read_findings(db,snapshot_sha256):
             (snapshot_sha256,)).fetchall()
     return [{"finding_id":id,"body_sha256":h,"submitted_at":ts,
              "body":json.loads(body),"status":status} for id,h,ts,body,status in rows]
+
+
+def ingest_curated_finding(db, pack, manifest, finding, now=None):
+    """Check exact snapshot and referent before writing untrusted quarantine E2.
+
+    This verifies technical integrity ONLY. The pack's release approval ID
+    remains unauthenticated; calling this function never publishes the pack,
+    authorizes a real project, or promotes findings into AMOS E0/E3/E4.
+    """
+    from .curated_audit import verify_release
+    verify_release(pack, manifest)
+    if not isinstance(finding, dict) or finding.get("referenced_item") not in {
+            record["id"] for record in pack["records"]}:
+        raise ValueError("finding references unknown project record")
+    return ingest_finding(db, manifest, finding, now=now)
