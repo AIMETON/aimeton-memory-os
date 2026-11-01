@@ -319,3 +319,29 @@ def compile_receipted_dispatch_context(
                   "source_mutation_performed": False},
     })
     return bundle
+
+
+def read_receipted_dispatch_e0(
+    db_path: str | Path, repo: str, source_comment_id: int, receipt_comment_id: int,
+    router_run_id: int, dispatched_run_id: int,
+) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any], dict[str, Any]]:
+    """Four bounded indexed lookups, immutable E0 only, no GitHub requests."""
+    if repo != "AIMETON/Choke_ring_antenna":
+        raise ValueError("unsupported C02 pilot scope")
+    columns = """SELECT evidence_id,digest,partition_name,source_type,source_ref,
+                        source_object_id,observed_at,payload_json FROM evidence"""
+    uri = Path(db_path).resolve().as_uri() + "?mode=ro"
+    with sqlite3.connect(uri, uri=True) as conn:
+        comments = [
+            _one(conn, columns + " WHERE evidence_id=?",
+                 (f"github:issue-comment:{repo}:{ident}",))
+            for ident in (source_comment_id, receipt_comment_id)
+        ]
+        runs = [
+            _one(conn, columns +
+                 " WHERE evidence_id LIKE ? AND source_type='github.workflow_run'"
+                 " ORDER BY observed_at DESC LIMIT 1",
+                 (f"github:workflow-run:{repo}:{ident}:%",))
+            for ident in (router_run_id, dispatched_run_id)
+        ]
+    return comments[0], comments[1], runs[0], runs[1]
