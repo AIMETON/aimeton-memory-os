@@ -6,6 +6,7 @@ stored as SHA256 digest only, and must not be placed in URLs/logs by callers.
 from __future__ import annotations
 
 import hashlib
+from contextlib import closing
 import secrets
 import sqlite3
 import uuid
@@ -74,7 +75,7 @@ def issue_synthetic_grant(
         raise ValueError("grant already expired")
     token = secrets.token_urlsafe(48)
     grant_id = str(uuid.uuid4())
-    with _connect(db_path) as conn:
+    with closing(_connect(db_path)) as conn:
         conn.execute("BEGIN IMMEDIATE")
         try:
             conn.execute(
@@ -94,7 +95,7 @@ def issue_synthetic_grant(
 def preview_synthetic_grant(db_path: str | Path, grant_id: str, *, now: str | None = None) -> dict[str, str]:
     """Public-safe synthetic metadata; never consumes the capability."""
     clock = _now(now)
-    with _connect(db_path) as conn:
+    with closing(_connect(db_path)) as conn:
         row = conn.execute(
             "SELECT mode,expires_at,revoked_at,redeemed_at FROM synthetic_audit_grants WHERE grant_id=?",
             (grant_id,),
@@ -144,7 +145,7 @@ def redeem_synthetic_grant(db_path: str | Path, capability: str, *, now: str | N
 def revoke_synthetic_grant(db_path: str | Path, grant_id: str, *, now: str | None = None) -> bool:
     """Local owner-operation placeholder. Do NOT expose without real admin auth."""
     stamp = _now(now)
-    with _connect(db_path) as conn:
+    with closing(_connect(db_path)) as conn:
         conn.execute("BEGIN IMMEDIATE")
         try:
             changed = conn.execute(
