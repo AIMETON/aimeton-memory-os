@@ -514,6 +514,7 @@ def process_shadow_store(
         "evidence_count": evidence_count_before,
         "envelope_traces": envelope_traces,
         "decision_chain_traces": chain_traces,
+        "dispatch_chain_traces": dispatch_traces,
         "created": created,
         "existing": existing,
         "e0_mutation_performed": False,
