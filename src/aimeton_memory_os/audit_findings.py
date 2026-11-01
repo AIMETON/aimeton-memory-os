@@ -9,7 +9,7 @@ from datetime import datetime,timezone
 
 CATEGORIES={"missing_evidence","contradiction","methodology","risk","recommendation"}
 SEVERITY={"low","medium","high"}
-EVIDENCE_URL = re.compile(r"https://github[.]com/AIMETON/(?:aimeton-memory-os|aimeton-site|aimeton-infrastructure)(?:/[A-Za-z0-9_./#-]+)?\\Z")
+EVIDENCE_URL = re.compile(r"https://github[.]com/AIMETON/(?:aimeton-memory-os|aimeton-site|aimeton-infrastructure)(?:/[A-Za-z0-9_./#-]+)?\Z")
 def _canonical(obj):
     return json.dumps(obj,sort_keys=True,separators=(",",":"),ensure_ascii=False).encode()
 
