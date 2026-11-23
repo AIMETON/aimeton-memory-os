@@ -51,3 +51,7 @@ basic secret redaction. Before production acceptance implement a trusted
 authenticated adapter, verified E0 integrity, canonical E3/E4 mission-state
 projection, contradiction derivation, complete cross-source replay and live
 access-control smoke on a self-hosted runner. Track in Issue #53.
+
+## Related continuity research
+
+[Claude Code guide mapping](CLAUDE_CODE_GUIDE_CONTINUITY_RESEARCH_2026-11-23.md) records candidate interruption, stale-state, integrity and authority tests against the existing #36/#53 gates. Research only: no change to v1 semantics, E3/E4 admission or execution authority.

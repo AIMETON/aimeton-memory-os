@@ -207,3 +207,7 @@ This is **compute optimisation**, not webhook delivery: the currently deployed
 five-minute GitHub polling timer continues until an independently
 verified event receiver, authenticated delivery, durable queue and reconciliation
 fallback are available. Do not reduce intake frequency before that deployment.
+
+## Continuity research references
+
+[Claude Code guide / AIMETON–AMOS assessment](docs/architecture/CLAUDE_CODE_GUIDE_CONTINUITY_RESEARCH_2026-11-23.md) maps source-pinned harness, interruption/recovery and memory-evaluation patterns to existing CCC, Mission Context v1 and Issues #36/#53. Research only; no runtime admission or changes to AMOS scope, compatibility gates or preregistered ablation.
